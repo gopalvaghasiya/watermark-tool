@@ -283,6 +283,134 @@ def apply_brand_watermark(
     return final_rgba.convert("RGB")
 
 
+def precompute_watermark_for_video(
+    width,
+    height,
+    sample_frame_bgr,
+    logo_path,
+    position="center_left",
+    scale_pct=0.28,
+    opacity=0.85,
+    margin_pct=0.04,
+    add_shadow=True,
+    color_override="auto"
+):
+    """
+    Precomputes the RGBA watermark overlay and bounding box (x1, y1, x2, y2)
+    for ultra-fast vectorized alpha-blending across all video frames.
+    """
+    if not logo_path or not os.path.exists(logo_path) or opacity <= 0:
+        return None
+
+    try:
+        raw_logo = Image.open(logo_path)
+    except Exception as e:
+        print(f"Warning: Could not open logo '{logo_path}': {e}", file=sys.stderr)
+        return None
+
+    target_w = max(40, int(width * scale_pct))
+    aspect_ratio = raw_logo.height / max(1, raw_logo.width)
+    target_h = max(15, int(target_w * aspect_ratio))
+
+    margin_x = int(width * margin_pct)
+    margin_y = int(height * margin_pct)
+
+    pos = position.lower().replace("-", "_")
+    if pos == "top_left":
+        x, y = margin_x, margin_y
+    elif pos in ["top_center", "top"]:
+        x = (width - target_w) // 2
+        y = margin_y
+    elif pos == "top_right":
+        x = width - target_w - margin_x
+        y = margin_y
+    elif pos in ["center_left", "left_center", "left"]:
+        x = margin_x
+        y = (height - target_h) // 2
+    elif pos in ["center", "middle"]:
+        x = (width - target_w) // 2
+        y = (height - target_h) // 2
+    elif pos in ["center_right", "right_center", "right"]:
+        x = width - target_w - margin_x
+        y = (height - target_h) // 2
+    elif pos == "bottom_left":
+        x = margin_x
+        y = height - target_h - margin_y
+    elif pos in ["bottom_center", "bottom"]:
+        x = (width - target_w) // 2
+        y = height - target_h - margin_y
+    elif pos in ["bottom_right", "br"]:
+        x = width - target_w - margin_x
+        y = height - target_h - margin_y
+    else:
+        x = margin_x
+        y = (height - target_h) // 2
+
+    # Sample luminance from ROI in sample_frame_bgr
+    x1, y1 = max(0, x), max(0, y)
+    x2, y2 = min(width, x + target_w), min(height, y + target_h)
+
+    if sample_frame_bgr is not None and sample_frame_bgr.size > 0:
+        roi = sample_frame_bgr[y1:y2, x1:x2]
+        # BGR luminance: 0.114*B + 0.587*G + 0.299*R
+        bg_luminance = float((roi[:, :, 0] * 0.114 + roi[:, :, 1] * 0.587 + roi[:, :, 2] * 0.299).mean())
+    else:
+        bg_luminance = 128.0
+
+    final_color_mode = color_override
+    if color_override == "auto":
+        if bg_luminance < 135:
+            final_color_mode = "white"
+        else:
+            final_color_mode = "original"
+
+    watermark = make_logo_transparent(raw_logo, bg_mode="auto", color_override=final_color_mode)
+    watermark = watermark.resize((target_w, target_h), Image.Resampling.LANCZOS)
+
+    alpha = watermark.split()[3]
+    alpha = alpha.point(lambda p: int(p * max(0.0, min(1.0, opacity))))
+    watermark.putalpha(alpha)
+
+    # Render on full transparent layer of size (width, height)
+    full_overlay = Image.new("RGBA", (width, height), (0, 0, 0, 0))
+
+    if add_shadow and opacity > 0.05:
+        shadow_canvas = Image.new("RGBA", (width, height), (0, 0, 0, 0))
+        shadow_wm = Image.new("RGBA", watermark.size, (0, 0, 0, 0))
+        s_alpha = watermark.split()[3].point(lambda p: int(p * 0.50))
+        shadow_wm.paste((0, 0, 0, 255), (0, 0), s_alpha)
+        shadow_canvas.paste(shadow_wm, (x + 2, y + 2), shadow_wm)
+        shadow_canvas = shadow_canvas.filter(ImageFilter.GaussianBlur(3))
+        full_overlay = Image.alpha_composite(full_overlay, shadow_canvas)
+
+    watermark_layer = Image.new("RGBA", (width, height), (0, 0, 0, 0))
+    watermark_layer.paste(watermark, (x, y), watermark)
+    full_overlay = Image.alpha_composite(full_overlay, watermark_layer)
+
+    # Convert to BGR array and normalized alpha channel (H, W, 1)
+    overlay_arr = np.array(full_overlay, dtype=np.float32)
+    overlay_bgr = overlay_arr[:, :, [2, 1, 0]]  # RGBA -> BGR
+    overlay_alpha = overlay_arr[:, :, 3:4] / 255.0  # (H, W, 1)
+
+    # Find non-zero bounding box for overlay to optimize blending
+    alpha_mask_2d = overlay_arr[:, :, 3] > 0
+    if np.any(alpha_mask_2d):
+        rows = np.any(alpha_mask_2d, axis=1)
+        cols = np.any(alpha_mask_2d, axis=0)
+        rmin, rmax = np.where(rows)[0][[0, -1]]
+        cmin, cmax = np.where(cols)[0][[0, -1]]
+        # Expand slightly
+        rmin, rmax = max(0, int(rmin)), min(height, int(rmax + 1))
+        cmin, cmax = max(0, int(cmin)), min(width, int(cmax + 1))
+        return {
+            "rmin": rmin, "rmax": rmax,
+            "cmin": cmin, "cmax": cmax,
+            "bgr_roi": overlay_bgr[rmin:rmax, cmin:cmax],
+            "alpha_roi": overlay_alpha[rmin:rmax, cmin:cmax]
+        }
+    return None
+
+
 def process_video(
     input_path,
     output_path,
@@ -301,28 +429,77 @@ def process_video(
     color_override="auto"
 ):
     """
-    Processes video files (.mp4, .mov, .webm, .avi, .m4v):
-    Removes Gemini corner watermark and overlays brand watermark on all frames.
+    High-Performance Video Pipeline:
+    Removes Gemini corner watermark and overlays brand watermark on all frames
+    with vectorized numpy blending and ultra-fast H.264 encoding.
     """
+    if not os.path.exists(input_path):
+        raise FileNotFoundError(f"Input file not found: {input_path}")
+
     cap = cv2.VideoCapture(input_path)
     if not cap.isOpened():
         raise ValueError(f"Cannot open video file: {input_path}")
 
     fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
-    width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    if fps <= 0 or np.isnan(fps):
+        fps = 30.0
+
+    raw_w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    raw_h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    
+    # libx264 strictly requires even dimensions
+    width = (raw_w // 2) * 2
+    height = (raw_h // 2) * 2
+
+    if width <= 0 or height <= 0:
+        raise ValueError(f"Invalid video dimensions: {raw_w}x{raw_h}")
 
     if not output_path.lower().endswith(".mp4"):
         output_path = os.path.splitext(output_path)[0] + ".mp4"
 
     os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
 
-    # Pre-render watermark layer
-    dummy_base = Image.new("RGB", (width, height), (30, 30, 30))
-    watermarked_dummy = apply_brand_watermark(
-        dummy_base,
-        logo_image_path=logo_path,
+    # Read first frame to sample luminance and initialize
+    ret, first_frame = cap.read()
+    if not ret or first_frame is None:
+        cap.release()
+        raise ValueError("Cannot read any frames from video file.")
+
+    if raw_w != width or raw_h != height:
+        first_frame = cv2.resize(first_frame, (width, height))
+
+    # Pre-create inpainting mask ONCE
+    mask = None
+    if remove_gemini:
+        mask = np.zeros((height, width), dtype=np.uint8)
+        box_w = max(10, int(width * box_size_pct))
+        box_h = max(10, int(height * box_size_pct))
+        margin_x = int(width * margin_pct)
+        margin_y = int(height * margin_pct)
+
+        if corner in ["bottom_right", "br"]:
+            x1, y1, x2, y2 = width - margin_x - box_w, height - margin_y - box_h, width - margin_x, height - margin_y
+        elif corner in ["bottom_left", "bl"]:
+            x1, y1, x2, y2 = margin_x, height - margin_y - box_h, margin_x + box_w, height - margin_y
+        elif corner in ["top_right", "tr"]:
+            x1, y1, x2, y2 = width - margin_x - box_w, margin_y, width - margin_x, margin_y + box_h
+        elif corner in ["top_left", "tl"]:
+            x1, y1, x2, y2 = margin_x, margin_y, margin_x + box_w, margin_y + box_h
+        else:
+            x1, y1, x2, y2 = width - margin_x - box_w, height - margin_y - box_h, width - margin_x, height - margin_y
+
+        mask[max(0, y1):min(height, y2), max(0, x1):min(width, x2)] = 255
+        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
+        mask = cv2.dilate(mask, kernel, iterations=1)
+
+    inpaint_flag = cv2.INPAINT_TELEA if inpaint_method.lower() == "telea" else cv2.INPAINT_NS
+
+    # Precompute watermark overlay ONCE
+    wm_data = precompute_watermark_for_video(
+        width=width,
+        height=height,
+        sample_frame_bgr=first_frame,
+        logo_path=logo_path,
         position=logo_pos,
         scale_pct=logo_scale,
         opacity=logo_opacity,
@@ -337,57 +514,49 @@ def process_video(
         "-f", "rawvideo",
         "-vcodec", "rawvideo",
         "-s", f"{width}x{height}",
-        "-pix_fmt", "rgb24",
+        "-pix_fmt", "bgr24",
         "-r", str(fps),
         "-i", "-",
         "-c:v", "libx264",
         "-pix_fmt", "yuv420p",
         "-crf", "18",
-        "-preset", "fast",
+        "-preset", "veryfast",
         output_path
     ]
 
     proc = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
-    frame_idx = 0
-    while True:
-        ret, frame_bgr = cap.read()
-        if not ret:
-            break
+    # Reset video capture to start
+    cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
 
-        # 1. Gemini Watermark Inpainting
-        if remove_gemini:
-            frame_bgr = remove_gemini_watermark_cv2(
-                frame_bgr,
-                corner=corner,
-                box_size_pct=box_size_pct,
-                margin_pct=margin_pct,
-                inpaint_radius=inpaint_radius,
-                method=inpaint_method
-            )
+    try:
+        while True:
+            ret, frame_bgr = cap.read()
+            if not ret or frame_bgr is None:
+                break
 
-        # 2. Watermark Overlay
-        frame_rgb = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB)
-        frame_pil = Image.fromarray(frame_rgb)
+            if raw_w != width or raw_h != height:
+                frame_bgr = cv2.resize(frame_bgr, (width, height))
 
-        if logo_path and os.path.exists(logo_path) and logo_opacity > 0:
-            frame_pil = apply_brand_watermark(
-                frame_pil,
-                logo_image_path=logo_path,
-                position=logo_pos,
-                scale_pct=logo_scale,
-                opacity=logo_opacity,
-                margin_pct=logo_margin,
-                add_shadow=add_shadow,
-                color_override=color_override
-            )
+            # 1. Gemini Watermark Inpainting
+            if mask is not None:
+                frame_bgr = cv2.inpaint(frame_bgr, mask, inpaint_radius, inpaint_flag)
 
-        proc.stdin.write(np.array(frame_pil).tobytes())
-        frame_idx += 1
+            # 2. Vectorized Watermark Overlay
+            if wm_data is not None:
+                rmin, rmax = wm_data["rmin"], wm_data["rmax"]
+                cmin, cmax = wm_data["cmin"], wm_data["cmax"]
+                roi = frame_bgr[rmin:rmax, cmin:cmax].astype(np.float32)
+                blended = roi * (1.0 - wm_data["alpha_roi"]) + wm_data["bgr_roi"] * wm_data["alpha_roi"]
+                frame_bgr[rmin:rmax, cmin:cmax] = blended.astype(np.uint8)
 
-    cap.release()
-    proc.stdin.close()
-    proc.wait()
+            proc.stdin.write(frame_bgr.tobytes())
+
+    finally:
+        cap.release()
+        if proc.stdin:
+            proc.stdin.close()
+        proc.wait()
 
     return output_path
 
