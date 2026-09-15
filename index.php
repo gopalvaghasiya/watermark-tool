@@ -1,3 +1,111 @@
+<?php
+require_once __DIR__ . '/auth.php';
+$is_auth = is_authenticated();
+
+if (!$is_auth):
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Gemini Watermark Studio (Velmora & Shreeja)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            background-color: #080d1a;
+            color: #f1f5f9;
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-slate-950">
+    <!-- Glow effects -->
+    <div class="absolute -top-40 -left-40 w-96 h-96 bg-emerald-600/15 rounded-full blur-3xl pointer-events-none"></div>
+    <div class="absolute -bottom-40 -right-40 w-96 h-96 bg-cyan-600/15 rounded-full blur-3xl pointer-events-none"></div>
+
+    <div class="relative w-full max-w-md bg-slate-900/90 border border-slate-800 rounded-3xl p-8 shadow-2xl backdrop-blur-xl">
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-400 text-white shadow-xl shadow-emerald-500/20 mb-4 ring-8 ring-emerald-500/10">
+                <i data-lucide="shield-check" class="w-8 h-8"></i>
+            </div>
+            <h1 class="font-display text-2xl font-bold text-white">Private Studio Access</h1>
+            <p class="text-xs text-slate-400 mt-1.5">Velmora Gems & Shreeja Gems Watermark Tool</p>
+        </div>
+
+        <?php if (!empty($login_error)): ?>
+            <div class="mb-6 p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-medium flex items-center gap-2.5">
+                <i data-lucide="alert-circle" class="w-4 h-4 shrink-0 text-rose-400"></i>
+                <span><?= htmlspecialchars($login_error) ?></span>
+            </div>
+        <?php endif; ?>
+
+        <form method="POST" action="index.php" class="space-y-5">
+            <div>
+                <label for="auth_password" class="block text-xs font-medium text-slate-300 mb-2">Enter Studio Password</label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
+                        <i data-lucide="lock" class="w-4 h-4"></i>
+                    </div>
+                    <input 
+                        type="password" 
+                        id="auth_password" 
+                        name="auth_password" 
+                        required 
+                        autofocus
+                        placeholder="••••••••••••"
+                        class="w-full bg-slate-950/80 border border-slate-700/80 rounded-xl pl-10 pr-11 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition shadow-inner"
+                    >
+                    <button 
+                        type="button" 
+                        onclick="togglePasswordVisibility()" 
+                        class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-200 transition"
+                    >
+                        <i id="eyeIcon" data-lucide="eye" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </div>
+
+            <button 
+                type="submit" 
+                class="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-semibold text-sm shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 transition duration-150 flex items-center justify-center gap-2"
+            >
+                <i data-lucide="key-round" class="w-4 h-4"></i> Unlock Studio
+            </button>
+        </form>
+
+        <div class="mt-8 pt-6 border-t border-slate-800/80 text-center">
+            <span class="text-[11px] text-slate-500 font-medium flex items-center justify-center gap-1.5">
+                <i data-lucide="lock" class="w-3 h-3 text-emerald-500"></i> Protected Private Workspace
+            </span>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+        function togglePasswordVisibility() {
+            const passInput = document.getElementById('auth_password');
+            const eyeIcon = document.getElementById('eyeIcon');
+            if (passInput.type === 'password') {
+                passInput.type = 'text';
+                eyeIcon.setAttribute('data-lucide', 'eye-off');
+            } else {
+                passInput.type = 'password';
+                eyeIcon.setAttribute('data-lucide', 'eye');
+            }
+            lucide.createIcons();
+        }
+    </script>
+</body>
+</html>
+<?php
+exit;
+endif;
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -116,6 +224,9 @@
                 </a>
                 <a href="../moissanite/index.php" class="text-xs font-medium text-slate-300 hover:text-white px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 transition flex items-center gap-1.5">
                     <i data-lucide="gem" class="w-3.5 h-3.5 text-cyan-400"></i> Shreeja Moissanite
+                </a>
+                <a href="auth.php?action=logout" class="text-xs font-medium text-rose-300 hover:text-white px-3 py-1.5 rounded-lg bg-rose-950/40 hover:bg-rose-900/60 border border-rose-800/60 transition flex items-center gap-1.5">
+                    <i data-lucide="log-out" class="w-3.5 h-3.5"></i> Logout
                 </a>
             </div>
         </div>
