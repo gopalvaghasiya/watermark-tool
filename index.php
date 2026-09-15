@@ -181,7 +181,7 @@
                             <button class="mt-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-lg shadow-lg shadow-emerald-600/30 transition flex items-center gap-1.5">
                                 <i data-lucide="file-plus" class="w-3.5 h-3.5"></i> Browse From Computer
                             </button>
-                            <input type="file" id="fileInput" accept="image/*" class="hidden">
+                            <input type="file" id="fileInput" accept="image/*,video/*,.mp4,.mov,.webm,.avi,.m4v" class="hidden">
                         </div>
 
                         <!-- Active Media Viewport -->
@@ -458,7 +458,7 @@
                     <button class="mt-3 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold rounded-lg border border-slate-700 transition">
                         Select Multiple Files
                     </button>
-                    <input type="file" id="batchFileInput" multiple accept="image/*" class="hidden">
+                    <input type="file" id="batchFileInput" multiple accept="image/*,video/*,.mp4,.mov,.webm,.avi,.m4v" class="hidden">
                 </div>
 
                 <!-- Batch Progress Bar -->
@@ -956,15 +956,20 @@
                     currentBatchResults = data.results;
                     grid.innerHTML = '';
                     data.results.forEach(item => {
+                        const isVid = (item.is_video) || /\.(mp4|mov|webm|avi|m4v)$/i.test(item.filename || '');
+                        const mediaTag = isVid 
+                            ? `<video src="${item.url}" class="w-full h-full object-cover" muted loop onmouseover="this.play()" onmouseout="this.pause()"></video><div class="absolute bottom-1.5 left-1.5 bg-slate-950/80 border border-slate-700/60 text-emerald-400 text-[9px] px-1.5 py-0.5 rounded font-bold flex items-center gap-1"><i data-lucide="film" class="w-2.5 h-2.5"></i> MP4</div>`
+                            : `<img src="${item.url}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" loading="lazy">`;
+
                         const card = document.createElement('div');
                         card.className = 'bg-slate-950/80 border border-slate-800 rounded-xl p-2 flex flex-col gap-2 group hover:border-emerald-500/50 transition';
                         card.innerHTML = `
-                            <div class="relative overflow-hidden rounded-lg aspect-square bg-slate-900">
-                                <img src="${item.url}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" loading="lazy">
+                            <div class="relative overflow-hidden rounded-lg aspect-square bg-slate-900 flex items-center justify-center">
+                                ${mediaTag}
                             </div>
                             <div class="flex items-center justify-between text-[11px] px-1">
                                 <span class="truncate text-slate-300 text-[10px]" title="${item.filename}">${item.filename}</span>
-                                <a href="${item.url}" download="${item.filename}" class="text-emerald-400 hover:text-emerald-300 p-1">
+                                <a href="${item.url}" download="${item.filename}" class="text-emerald-400 hover:text-emerald-300 p-1" title="Download">
                                     <i data-lucide="download" class="w-3.5 h-3.5"></i>
                                 </a>
                             </div>
