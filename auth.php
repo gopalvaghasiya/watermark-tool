@@ -6,8 +6,8 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Master Secret Password
-define('APP_PASSWORD', 'Shreeja@7567');
+// Master Secret PIN / Password
+define('APP_PASSWORD', '1243');
 
 // Handle Logout
 if (isset($_GET['action']) && $_GET['action'] === 'logout') {
@@ -27,7 +27,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['auth_password'])) {
         header('Location: index.php');
         exit;
     } else {
-        $login_error = 'Incorrect Password. Please try again.';
+        $login_error = 'Incorrect PIN. Please try again.';
     }
 }
 

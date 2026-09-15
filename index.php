@@ -46,7 +46,7 @@ if (!$is_auth):
 
         <form method="POST" action="index.php" class="space-y-5">
             <div>
-                <label for="auth_password" class="block text-xs font-medium text-slate-300 mb-2">Enter Studio Password</label>
+                <label for="auth_password" class="block text-xs font-medium text-slate-300 mb-2">Enter Studio PIN</label>
                 <div class="relative">
                     <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
                         <i data-lucide="lock" class="w-4 h-4"></i>
@@ -57,7 +57,7 @@ if (!$is_auth):
                         name="auth_password" 
                         required 
                         autofocus
-                        placeholder="••••••••••••"
+                        placeholder="Enter PIN"
                         class="w-full bg-slate-950/80 border border-slate-700/80 rounded-xl pl-10 pr-11 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition shadow-inner"
                     >
                     <button 
