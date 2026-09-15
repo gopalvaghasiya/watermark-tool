@@ -1,0 +1,15 @@
+﻿# Temporary uploaded and output files
+uploads/*
+!uploads/.gitkeep
+outputs/*
+!outputs/.gitkeep
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.class
+
+# Environment and OS files
+.env
+.DS_Store
+Thumbs.db
