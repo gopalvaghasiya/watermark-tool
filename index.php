@@ -322,13 +322,13 @@
                                 <button type="button" onclick="setLogoPos('top_center')" data-pos="top_center" class="pos-btn p-2 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 text-center font-mono text-[10px]">Top</button>
                                 <button type="button" onclick="setLogoPos('top_right')" data-pos="top_right" class="pos-btn p-2 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 text-center font-mono text-[10px]">TR</button>
                                 
-                                <button type="button" onclick="setLogoPos('center_left')" data-pos="center_left" class="pos-btn p-2 rounded-lg bg-amber-500 text-slate-950 font-bold text-center font-mono text-[10px]">Left</button>
+                                <button type="button" onclick="setLogoPos('center_left')" data-pos="center_left" class="pos-btn p-2 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 text-center font-mono text-[10px]">Left</button>
                                 <button type="button" onclick="setLogoPos('center')" data-pos="center" class="pos-btn p-2 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 text-center font-mono text-[10px]">Center</button>
                                 <button type="button" onclick="setLogoPos('center_right')" data-pos="center_right" class="pos-btn p-2 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 text-center font-mono text-[10px]">Right</button>
                                 
                                 <button type="button" onclick="setLogoPos('bottom_left')" data-pos="bottom_left" class="pos-btn p-2 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 text-center font-mono text-[10px]">BL</button>
                                 <button type="button" onclick="setLogoPos('bottom_center')" data-pos="bottom_center" class="pos-btn p-2 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 text-center font-mono text-[10px]">Bottom</button>
-                                <button type="button" onclick="setLogoPos('bottom_right')" data-pos="bottom_right" class="pos-btn p-2 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 text-center font-mono text-[10px]">BR</button>
+                                <button type="button" onclick="setLogoPos('bottom_right')" data-pos="bottom_right" class="pos-btn p-2 rounded-lg bg-amber-500 text-slate-950 font-bold text-center font-mono text-[10px]">BR</button>
                             </div>
                         </div>
 
@@ -345,9 +345,9 @@
                         <div>
                             <div class="flex justify-between text-slate-400 mb-1">
                                 <span class="font-medium text-slate-300">Logo Size (Width %)</span>
-                                <span id="valScale" class="text-amber-400 font-mono font-bold">32%</span>
+                                <span id="valScale" class="text-amber-400 font-mono font-bold">15%</span>
                             </div>
-                            <input type="range" id="rngScale" min="0.10" max="0.65" step="0.01" value="0.32" class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer" oninput="document.getElementById('valScale').textContent = Math.round(this.value*100) + '%'; saveSettings();">
+                            <input type="range" id="rngScale" min="0.05" max="0.65" step="0.01" value="0.15" class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer" oninput="document.getElementById('valScale').textContent = Math.round(this.value*100) + '%'; saveSettings();">
                         </div>
 
                         <!-- Drop Shadow Toggle -->
@@ -435,7 +435,7 @@
         const MASTER_PIN = "1243";
         let currentBrand = 'shreeja'; // Default to Shreeja Gems
         let currentColorMode = 'auto'; // 'auto', 'white', 'original', 'gold'
-        let selectedLogoPos = 'center_left';
+        let selectedLogoPos = 'bottom_right'; // Default: Bottom-Right
         let currentBatchFiles = [];
         let currentBatchResults = [];
         const logoImgCache = {};
@@ -862,7 +862,7 @@
             ctx.restore();
         }
 
-        // Process a single image file on client canvas
+        // Process a single image file on client canvas (100% Lossless / Ultra-HD Clarity)
         function processImageOnClient(file) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -871,11 +871,14 @@
                     img.onload = async () => {
                         try {
                             const canvas = document.createElement('canvas');
+                            // Full 1:1 Pixel Native Resolution (Zero downscaling / degradation)
                             canvas.width = img.naturalWidth || img.width;
                             canvas.height = img.naturalHeight || img.height;
                             const ctx = canvas.getContext('2d', { willReadFrequently: true });
+                            ctx.imageSmoothingEnabled = true;
+                            ctx.imageSmoothingQuality = 'high';
 
-                            // Draw original photo
+                            // Draw original photo at full crispness
                             ctx.drawImage(img, 0, 0);
 
                             // Optional Gemini clean (Safe soft feather inpaint)
@@ -887,20 +890,26 @@
                             }
 
                             // Brand logo overlay
-                            const scalePct = parseFloat(document.getElementById('rngScale').value) || 0.28;
-                            const opacityPct = parseFloat(document.getElementById('rngOpacity').value) || 0.85;
+                            const scalePct = parseFloat(document.getElementById('rngScale').value) || 0.15;
+                            const opacityPct = parseFloat(document.getElementById('rngOpacity').value) || 0.90;
                             const shadow = document.getElementById('chkShadow').checked;
 
                             await drawBrandLogoCanvas(ctx, canvas.width, canvas.height, currentBrand, currentColorMode, selectedLogoPos, scalePct, opacityPct, shadow);
 
+                            // Preserve exact image format with 100% maximum studio quality
+                            const isPng = (file.type && file.type === 'image/png') || /\.png$/i.test(file.name || '');
+                            const isWebp = (file.type && file.type === 'image/webp') || /\.webp$/i.test(file.name || '');
+                            const exportMime = isPng ? 'image/png' : (isWebp ? 'image/webp' : 'image/jpeg');
+                            const exportQuality = 1.0; // 100% loss-free quality
+
                             canvas.toBlob((blob) => {
                                 if (blob) {
                                     const blobUrl = URL.createObjectURL(blob);
-                                    resolve({ blob, blobUrl, dataUrl: canvas.toDataURL('image/jpeg', 0.95) });
+                                    resolve({ blob, blobUrl, dataUrl: canvas.toDataURL(exportMime, exportQuality) });
                                 } else {
                                     reject(new Error('Canvas export failed'));
                                 }
-                            }, 'image/jpeg', 0.95);
+                            }, exportMime, exportQuality);
                         } catch (err) {
                             reject(err);
                         }
