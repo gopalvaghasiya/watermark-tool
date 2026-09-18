@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gemini Watermark Remover & Brand Studio - Velmora & Shreeja</title>
+    <title>Gemini Watermark Cleaner & Brand Studio - Shreeja & Velmora</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -45,70 +45,35 @@
             border-radius: 4px;
         }
         input[type="range"] {
-            accent-color: #10b981;
+            accent-color: #f59e0b;
         }
-        .comparison-container {
-            position: relative;
-            overflow: hidden;
-            user-select: none;
-            display: inline-block;
-            max-width: 100%;
+        .brand-card-active-shreeja {
+            border-color: #f59e0b !important;
+            background: rgba(245, 158, 11, 0.12) !important;
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.25);
         }
-        .comparison-before {
-            position: absolute;
-            top: 0;
-            left: 0;
-            height: 100%;
-            overflow: hidden;
-            z-index: 10;
-        }
-        .comparison-divider {
-            position: absolute;
-            top: 0;
-            bottom: 0;
-            width: 3px;
-            background: #10b981;
-            box-shadow: 0 0 12px rgba(16, 185, 129, 0.9);
-            z-index: 20;
-            cursor: ew-resize;
-        }
-        .comparison-handle {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 32px;
-            height: 32px;
-            background: #10b981;
-            border: 2px solid #ffffff;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.6);
-        }
-        .brand-card-active {
+        .brand-card-active-velmora {
             border-color: #10b981 !important;
-            background: rgba(16, 185, 129, 0.1) !important;
-            box-shadow: 0 0 15px rgba(16, 185, 129, 0.2);
+            background: rgba(16, 185, 129, 0.12) !important;
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.25);
         }
     </style>
 </head>
-<body class="min-h-screen flex flex-col antialiased selection:bg-emerald-500 selection:text-white">
+<body class="min-h-screen flex flex-col antialiased selection:bg-amber-500 selection:text-white">
 
     <!-- ==================== PIN AUTHENTICATION MODAL (1243) ==================== -->
     <div id="pinAuthModal" class="fixed inset-0 z-[999] bg-slate-950 flex items-center justify-center p-4">
         <!-- Background Ambient Glow -->
-        <div class="absolute -top-40 -left-40 w-96 h-96 bg-emerald-600/20 rounded-full blur-3xl pointer-events-none"></div>
-        <div class="absolute -bottom-40 -right-40 w-96 h-96 bg-cyan-600/20 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute -top-40 -left-40 w-96 h-96 bg-amber-600/20 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute -bottom-40 -right-40 w-96 h-96 bg-emerald-600/20 rounded-full blur-3xl pointer-events-none"></div>
 
         <div class="relative w-full max-w-md bg-slate-900/90 border border-slate-800 rounded-3xl p-8 shadow-2xl backdrop-blur-xl">
             <div class="text-center mb-7">
-                <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-400 text-white shadow-xl shadow-emerald-500/20 mb-4 ring-8 ring-emerald-500/10">
-                    <i data-lucide="shield-check" class="w-8 h-8"></i>
+                <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-tr from-amber-500 to-yellow-300 text-slate-950 shadow-xl shadow-amber-500/20 mb-4 ring-8 ring-amber-500/10">
+                    <i data-lucide="gem" class="w-8 h-8"></i>
                 </div>
                 <h1 class="font-display text-2xl font-bold text-white">Private Studio Access</h1>
-                <p class="text-xs text-slate-400 mt-1.5">Velmora Gems & Shreeja Gems Watermark Tool</p>
+                <p class="text-xs text-slate-400 mt-1.5">Shreeja Gems & Velmora Gems Watermark Tool</p>
             </div>
 
             <div id="pinErrorMsg" class="hidden mb-5 p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-medium flex items-center gap-2.5">
@@ -129,7 +94,7 @@
                             required 
                             autofocus
                             placeholder="Enter 4-digit PIN"
-                            class="w-full bg-slate-950/80 border border-slate-700/80 rounded-xl pl-10 pr-11 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition shadow-inner font-mono tracking-widest text-center"
+                            class="w-full bg-slate-950/80 border border-slate-700/80 rounded-xl pl-10 pr-11 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition shadow-inner font-mono tracking-widest text-center"
                         >
                         <button 
                             type="button" 
@@ -143,7 +108,7 @@
 
                 <button 
                     type="submit" 
-                    class="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-semibold text-sm shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 transition duration-150 flex items-center justify-center gap-2"
+                    class="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-600 hover:to-yellow-500 text-slate-950 font-bold text-sm shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40 transition duration-150 flex items-center justify-center gap-2"
                 >
                     <i data-lucide="key-round" class="w-4 h-4"></i> Unlock Studio
                 </button>
@@ -151,7 +116,7 @@
 
             <div class="mt-7 pt-5 border-t border-slate-800/80 text-center">
                 <span class="text-[11px] text-slate-500 font-medium flex items-center justify-center gap-1.5">
-                    <i data-lucide="lock" class="w-3 h-3 text-emerald-500"></i> Protected Private Workspace
+                    <i data-lucide="lock" class="w-3 h-3 text-amber-500"></i> Protected Private Workspace
                 </span>
             </div>
         </div>
@@ -161,26 +126,24 @@
     <header class="border-b border-slate-800/80 bg-slate-900/90 backdrop-blur-md sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
             <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center shadow-lg shadow-emerald-500/20">
-                    <i data-lucide="sparkles" class="w-5 h-5 text-white"></i>
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-yellow-400 flex items-center justify-center shadow-lg shadow-amber-500/20 text-slate-950">
+                    <i data-lucide="gem" class="w-5 h-5"></i>
                 </div>
                 <div>
                     <h1 class="font-display font-bold text-lg text-white leading-tight flex items-center gap-2">
                         Gemini Watermark Cleaner & Brand Studio
-                        <span class="text-xs bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full font-sans font-medium">Auto-Contrast Edition</span>
+                        <span class="text-xs bg-amber-500/20 text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded-full font-sans font-medium">Batch Studio</span>
                     </h1>
-                    <p class="text-xs text-slate-400">Velmora Gems & Shreeja Gems • Ultra-HD Etsy Listing Quality</p>
+                    <p class="text-xs text-slate-400">Shreeja Gems & Velmora Gems • Ultra-HD Batch Processor</p>
                 </div>
             </div>
 
             <!-- Navigation Links -->
             <div class="flex items-center gap-3">
-                <a href="../create_draft.php" class="text-xs font-medium text-slate-300 hover:text-white px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 transition hidden sm:flex items-center gap-1.5">
-                    <i data-lucide="external-link" class="w-3.5 h-3.5"></i> Velmora Lab-Grown
-                </a>
-                <a href="../moissanite/index.php" class="text-xs font-medium text-slate-300 hover:text-white px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 transition hidden sm:flex items-center gap-1.5">
-                    <i data-lucide="gem" class="w-3.5 h-3.5 text-cyan-400"></i> Shreeja Moissanite
-                </a>
+                <span class="hidden md:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-800/80 border border-slate-700 text-xs text-slate-300">
+                    <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+                    Default: <strong id="headerBrandBadge" class="text-amber-400">Shreeja Gems</strong>
+                </span>
                 <button onclick="lockStudio()" class="text-xs font-medium text-rose-300 hover:text-white px-3 py-1.5 rounded-lg bg-rose-950/40 hover:bg-rose-900/60 border border-rose-800/60 transition flex items-center gap-1.5" title="Lock Studio">
                     <i data-lucide="log-out" class="w-3.5 h-3.5"></i> Lock
                 </button>
@@ -191,193 +154,159 @@
     <!-- Main Container -->
     <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
         
-        <!-- Mode Tabs -->
-        <div class="flex items-center justify-between border-b border-slate-800 pb-4">
-            <div class="inline-flex p-1 bg-slate-900 border border-slate-800 rounded-xl">
-                <button onclick="switchMode('single')" id="tabSingle" class="px-5 py-2 text-sm font-semibold rounded-lg transition flex items-center gap-2 bg-emerald-500 text-white shadow">
-                    <i data-lucide="image" class="w-4 h-4"></i> Single Image Studio
-                </button>
-                <button onclick="switchMode('batch')" id="tabBatch" class="px-5 py-2 text-sm font-semibold rounded-lg transition flex items-center gap-2 text-slate-400 hover:text-white">
-                    <i data-lucide="layers" class="w-4 h-4"></i> Batch Bulk Processor
-                </button>
-            </div>
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
             
-            <div class="text-xs text-slate-400 hidden sm:flex items-center gap-2">
-                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                <span>Smart Auto-Contrast Active (Adapts White/Color on Dark/Light Photos)</span>
-            </div>
-        </div>
-
-        <!-- ==================== 1. SINGLE IMAGE STUDIO ==================== -->
-        <div id="singleModeSection" class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            
-            <!-- Left: Image Preview & Interactive Canvas (8 cols) -->
-            <div class="lg:col-span-8 flex flex-col gap-4">
+            <!-- Left: Batch Upload Zone & Gallery (8 cols) -->
+            <div class="lg:col-span-8 flex flex-col gap-5">
                 
-                <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 sm:p-6 flex flex-col relative shadow-2xl">
+                <!-- Batch Upload Zone -->
+                <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-5">
                     
-                    <!-- Top Canvas Action Bar -->
-                    <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-800 text-xs">
-                        <div class="flex items-center gap-2">
-                            <span class="font-semibold text-slate-200">Image Canvas</span>
-                            <span id="imageMeta" class="text-slate-400 truncate max-w-[200px]">No image loaded</span>
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-800">
+                        <div>
+                            <h2 class="text-base font-bold text-white flex items-center gap-2">
+                                <i data-lucide="folder-up" class="w-5 h-5 text-amber-400"></i>
+                                Batch Images / Video Processor
+                            </h2>
+                            <p class="text-xs text-slate-400 mt-0.5">Select multiple images (5, 20, 100+) or whole folders to batch clean and watermark.</p>
                         </div>
-                        
-                        <!-- View Mode Switcher -->
-                        <div class="flex items-center gap-1.5" id="canvasControls" style="display: none;">
-                            <div class="inline-flex p-0.5 bg-slate-950 rounded-lg border border-slate-800 text-[11px]">
-                                <button onclick="setViewMode('split')" id="btnViewSplit" class="px-2.5 py-1 rounded font-medium bg-emerald-500 text-white">Split Swipe</button>
-                                <button onclick="setViewMode('after')" id="btnViewAfter" class="px-2.5 py-1 rounded font-medium text-slate-400 hover:text-white">Final Result</button>
-                                <button onclick="setViewMode('before')" id="btnViewBefore" class="px-2.5 py-1 rounded font-medium text-slate-400 hover:text-white">Original Gemini</button>
-                            </div>
-                        </div>
+                        <span class="text-xs px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 border border-slate-700 flex items-center gap-1 self-start sm:self-auto">
+                            <i data-lucide="check" class="w-3.5 h-3.5 text-amber-400"></i> Multi-Select Active
+                        </span>
                     </div>
 
-                    <!-- Dropzone / Image Viewport Container -->
-                    <div id="dropzone" class="w-full min-h-[460px] max-h-[620px] rounded-xl border-2 border-dashed border-slate-700/80 hover:border-emerald-500/80 bg-slate-950/60 flex flex-col items-center justify-center p-4 text-center transition cursor-pointer relative overflow-hidden group">
+                    <!-- Dropzone -->
+                    <div id="batchDropzone" class="w-full min-h-[220px] rounded-xl border-2 border-dashed border-slate-700/80 hover:border-amber-500/80 bg-slate-950/60 flex flex-col items-center justify-center p-6 text-center cursor-pointer transition relative group">
+                        <div class="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center group-hover:scale-110 transition duration-300">
+                            <i data-lucide="upload-cloud" class="w-8 h-8"></i>
+                        </div>
+                        <p class="text-base font-semibold text-slate-200 mt-3">Click or Drag & Drop Multiple Photos Here</p>
+                        <p class="text-xs text-slate-400 mt-1">Supports JPG, PNG, WEBP, MP4 • Paste directly with <kbd class="px-1.5 py-0.5 bg-slate-800 border border-slate-700 rounded text-slate-300">Ctrl+V</kbd></p>
+                        <p class="text-xs text-amber-400 font-medium mt-1">Applying <span id="batchSelectedBrandName" class="font-bold">Shreeja Gems</span> logo watermark</p>
                         
-                        <!-- Empty State -->
-                        <div id="emptyState" class="flex flex-col items-center gap-3">
-                            <div class="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center group-hover:scale-110 transition duration-300">
-                                <i data-lucide="upload-cloud" class="w-8 h-8"></i>
-                            </div>
-                            <div>
-                                <p class="text-base font-semibold text-slate-200">Drag & Drop your Gemini / AI jewelry photo here</p>
-                                <p class="text-xs text-slate-400 mt-1">Supports JPG, PNG, WEBP • Paste directly with <kbd class="px-1.5 py-0.5 bg-slate-800 border border-slate-700 rounded text-slate-300">Ctrl+V</kbd></p>
-                            </div>
-                            <button class="mt-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-lg shadow-lg shadow-emerald-600/30 transition flex items-center gap-1.5">
-                                <i data-lucide="file-plus" class="w-3.5 h-3.5"></i> Browse From Computer
+                        <div class="mt-4 flex items-center gap-2">
+                            <button type="button" class="px-5 py-2.5 bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-600 hover:to-yellow-500 text-slate-950 font-bold text-xs rounded-xl shadow-lg shadow-amber-500/20 transition flex items-center gap-1.5">
+                                <i data-lucide="images" class="w-4 h-4"></i> Browse Multiple Files
                             </button>
-                            <input type="file" id="fileInput" accept="image/*,video/*,.mp4,.mov,.webm,.avi,.m4v" class="hidden">
                         </div>
-
-                        <!-- Active Media Viewport -->
-                        <div id="previewContainer" class="hidden w-full h-full flex items-center justify-center relative overflow-hidden">
-                            
-                            <!-- Split Comparison Viewer (For Images) -->
-                            <div id="comparisonBox" class="comparison-container rounded-lg shadow-2xl relative border border-slate-800">
-                                <!-- Processed Image (Cleaned + Watermarked) -->
-                                <img id="processedImg" class="max-h-[550px] w-auto max-w-full block object-contain select-none" alt="Processed Output">
-                                
-                                <!-- Original Image (Under Left Split) -->
-                                <div id="comparisonBefore" class="comparison-before" style="width: 50%;">
-                                    <img id="originalImg" class="max-h-[550px] w-auto max-w-full block object-contain select-none" alt="Original With Gemini Watermark">
-                                    <div class="absolute top-3 left-3 bg-red-600/90 backdrop-blur-md text-white font-mono text-[10px] px-2 py-0.5 rounded uppercase tracking-wider font-bold z-10 pointer-events-none">
-                                        Before (Gemini AI)
-                                    </div>
-                                </div>
-
-                                <!-- Draggable Divider Handle -->
-                                <div id="comparisonDivider" class="comparison-divider" style="left: 50%;">
-                                    <div class="comparison-handle">
-                                        <i data-lucide="chevrons-left-right" class="w-4 h-4 text-white"></i>
-                                    </div>
-                                </div>
-
-                                <div id="badgeAfter" class="absolute top-3 right-3 bg-emerald-600/90 backdrop-blur-md text-white font-mono text-[10px] px-2 py-0.5 rounded uppercase tracking-wider font-bold z-10 pointer-events-none">
-                                    After (<span id="currentBrandBadge">Velmora</span>)
-                                </div>
-                            </div>
-
-                            <!-- Video Player Viewport (For Videos) -->
-                            <div id="videoContainer" class="hidden w-full max-h-[550px] flex flex-col items-center justify-center gap-2">
-                                <video id="processedVideo" class="max-h-[500px] max-w-full rounded-xl shadow-2xl border border-slate-800" controls autoplay loop playsinline muted></video>
-                                <span class="text-[11px] text-emerald-400 font-medium flex items-center gap-1">
-                                    <i data-lucide="film" class="w-3.5 h-3.5"></i> Video Watermarked & Rendered in H.264 HD
-                                </span>
-                            </div>
-
-                        </div>
-
-                        <!-- Processing Spinner -->
-                        <div id="loadingOverlay" class="hidden absolute inset-0 bg-slate-950/80 backdrop-blur-sm z-30 flex flex-col items-center justify-center gap-3">
-                            <div class="w-12 h-12 border-4 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin"></div>
-                            <p class="text-sm font-semibold text-emerald-400 animate-pulse" id="loadingText">Inpainting Gemini watermark & applying branding...</p>
-                        </div>
+                        <input type="file" id="batchFileInput" multiple accept="image/*,video/*,.mp4,.mov,.webm,.avi,.m4v" class="hidden">
                     </div>
 
-                    <!-- Bottom Quick Actions -->
-                    <div id="bottomActionRow" class="hidden mt-4 pt-4 border-t border-slate-800 flex flex-wrap items-center justify-between gap-3">
-                        <button onclick="clearCurrentSingle()" class="px-3 py-1.5 text-xs text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded-lg border border-rose-500/20 transition flex items-center gap-1.5">
-                            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Clear & New Photo
-                        </button>
-                        <div class="flex items-center gap-3">
-                            <button onclick="processSingle()" class="px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white text-xs font-bold rounded-lg shadow-lg shadow-emerald-500/20 transition flex items-center gap-1.5">
-                                <i data-lucide="sparkles" class="w-4 h-4"></i> Re-Process / Apply Settings
-                            </button>
-                            <button onclick="downloadProcessedSingle()" class="px-5 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-extrabold rounded-lg shadow-lg shadow-emerald-500/30 transition flex items-center gap-1.5">
-                                <i data-lucide="download" class="w-4 h-4"></i> Download Result
-                            </button>
+                    <!-- Batch Progress Bar -->
+                    <div id="batchProgressBox" class="hidden space-y-2 p-4 bg-slate-950/70 border border-slate-800 rounded-xl">
+                        <div class="flex justify-between text-xs">
+                            <span class="text-slate-300 font-medium flex items-center gap-2" id="batchProgressLabel">
+                                <i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin text-amber-400"></i> Processing images...
+                            </span>
+                            <span id="batchProgressPercent" class="text-amber-400 font-mono font-bold">0%</span>
+                        </div>
+                        <div class="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden">
+                            <div id="batchProgressBar" class="h-full bg-gradient-to-r from-amber-500 to-yellow-400 transition-all duration-200 rounded-full" style="width: 0%;"></div>
                         </div>
                     </div>
 
                 </div>
+
+                <!-- Batch Results Gallery -->
+                <div id="batchResultsContainer" class="hidden bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-5">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+                        <div>
+                            <h3 class="text-base font-bold text-white flex items-center gap-2">
+                                <i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-400"></i>
+                                Processed Photos (<span id="batchCountText">0</span>)
+                            </h3>
+                            <p class="text-xs text-slate-400 mt-0.5">High-definition images ready for Etsy & catalog upload.</p>
+                        </div>
+                        
+                        <!-- Batch Action Buttons -->
+                        <div class="flex flex-wrap items-center gap-2">
+                            <button onclick="clearBatch()" class="px-3 py-2 text-xs text-rose-400 hover:bg-rose-500/10 rounded-lg border border-rose-500/20 transition flex items-center gap-1">
+                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Clear
+                            </button>
+                            <button onclick="reprocessCurrentBatch()" class="px-3 py-2 text-xs text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-lg border border-slate-700 transition flex items-center gap-1" title="Re-apply new settings to current images">
+                                <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Re-Apply
+                            </button>
+                            <button onclick="downloadAllIndividualImages()" id="btnDownloadAllDirect" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-lg border border-slate-700 transition flex items-center gap-1.5">
+                                <i data-lucide="download" class="w-3.5 h-3.5 text-amber-400"></i> Download All
+                            </button>
+                            <a id="btnDownloadZip" href="#" class="px-5 py-2 bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-600 hover:to-yellow-500 text-slate-950 text-xs font-bold rounded-lg shadow-lg shadow-amber-500/20 transition flex items-center gap-1.5">
+                                <i data-lucide="archive" class="w-4 h-4"></i> Download ZIP
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Thumbnails Grid -->
+                    <div id="batchGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                        <!-- Injected via JavaScript -->
+                    </div>
+                </div>
+
             </div>
 
             <!-- Right: Studio Controls Panel (4 cols) -->
             <div class="lg:col-span-4 flex flex-col gap-5">
                 
-                <!-- 1. Brand Selector (Velmora vs Shreeja) -->
+                <!-- 1. Brand Selector -->
                 <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
                     <div class="flex items-center justify-between pb-3 border-b border-slate-800">
                         <div class="flex items-center gap-2">
-                            <div class="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center">
+                            <div class="w-7 h-7 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center justify-center">
                                 <i data-lucide="stamp" class="w-4 h-4"></i>
                             </div>
-                            <h2 class="text-sm font-bold text-white">Select Your Brand</h2>
+                            <h2 class="text-sm font-bold text-white">1. Select Brand</h2>
                         </div>
-                        <span class="text-[11px] text-slate-400 font-medium" id="brandActiveIndicator">Velmora Gems</span>
+                        <span class="text-[11px] text-amber-400 font-bold" id="brandActiveIndicator">Shreeja Gems Active</span>
                     </div>
 
-                    <!-- 2 Brand Selection Cards -->
+                    <!-- 2 Brand Selection Cards (Default: Shreeja Gems) -->
                     <div class="grid grid-cols-2 gap-3">
                         
-                        <!-- Velmora Gems Card -->
-                        <button type="button" onclick="selectBrand('velmora')" id="brandCardVelmora" class="brand-card-active p-3 rounded-xl border border-slate-700 bg-slate-950/60 hover:border-emerald-500/60 transition text-left flex flex-col gap-2 group">
+                        <!-- Shreeja Gems Card (Default) -->
+                        <button type="button" onclick="selectBrand('shreeja')" id="brandCardShreeja" class="brand-card-active-shreeja p-3 rounded-xl border border-amber-500 bg-slate-950/60 hover:border-amber-400 transition text-left flex flex-col gap-2 group">
                             <div class="flex items-center justify-between">
-                                <span class="text-xs font-bold text-white group-hover:text-emerald-400 flex items-center gap-1.5">
-                                    🌸 Velmora
-                                </span>
-                                <span id="checkVelmora" class="w-4 h-4 rounded-full bg-emerald-500 text-slate-950 flex items-center justify-center text-[10px] font-bold">✓</span>
-                            </div>
-                            <div class="w-full h-10 bg-slate-900 rounded-lg p-1 flex items-center justify-center border border-slate-800 overflow-hidden">
-                                <img src="assets/logos/velmora_gems.png" class="max-h-full max-w-full object-contain" alt="Velmora Gems">
-                            </div>
-                            <span class="text-[10px] text-slate-400">Authentic & Fine Jewelry</span>
-                        </button>
-
-                        <!-- Shreeja Gems Card -->
-                        <button type="button" onclick="selectBrand('shreeja')" id="brandCardShreeja" class="p-3 rounded-xl border border-slate-700 bg-slate-950/60 hover:border-amber-500/60 transition text-left flex flex-col gap-2 group">
-                            <div class="flex items-center justify-between">
-                                <span class="text-xs font-bold text-white group-hover:text-amber-400 flex items-center gap-1.5">
+                                <span class="text-xs font-bold text-white group-hover:text-amber-400 flex items-center gap-1">
                                     💎 Shreeja
                                 </span>
-                                <span id="checkShreeja" class="w-4 h-4 rounded-full bg-slate-700 text-slate-400 flex items-center justify-center text-[10px] font-bold hidden">✓</span>
+                                <span id="checkShreeja" class="w-4 h-4 rounded-full bg-amber-500 text-slate-950 flex items-center justify-center text-[10px] font-bold">✓</span>
                             </div>
-                            <div class="w-full h-10 bg-slate-900 rounded-lg p-1 flex items-center justify-center border border-slate-800 overflow-hidden">
+                            <div class="w-full h-11 bg-slate-900 rounded-lg p-1 flex items-center justify-center border border-slate-800 overflow-hidden">
                                 <img src="assets/logos/shreeja_gems.png" class="max-h-full max-w-full object-contain" alt="Shreeja Gems">
                             </div>
-                            <span class="text-[10px] text-slate-400">Moissanite & Diamonds</span>
+                            <span class="text-[10px] text-amber-300 font-medium">Luxury Moissanite</span>
+                        </button>
+
+                        <!-- Velmora Gems Card -->
+                        <button type="button" onclick="selectBrand('velmora')" id="brandCardVelmora" class="p-3 rounded-xl border border-slate-700 bg-slate-950/60 hover:border-emerald-500/60 transition text-left flex flex-col gap-2 group">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-bold text-white group-hover:text-emerald-400 flex items-center gap-1">
+                                    🌸 Velmora
+                                </span>
+                                <span id="checkVelmora" class="w-4 h-4 rounded-full bg-slate-700 text-slate-400 flex items-center justify-center text-[10px] font-bold hidden">✓</span>
+                            </div>
+                            <div class="w-full h-11 bg-slate-900 rounded-lg p-1 flex items-center justify-center border border-slate-800 overflow-hidden">
+                                <img src="assets/logos/velmora_gems.png" class="max-h-full max-w-full object-contain" alt="Velmora Gems">
+                            </div>
+                            <span class="text-[10px] text-slate-400">Lab-Grown Jewelry</span>
                         </button>
 
                     </div>
 
-                    <!-- Contrast & Color Appearance Mode -->
+                    <!-- Visibility / Color Mode -->
                     <div class="space-y-3 pt-2 border-t border-slate-800 text-xs">
                         <div>
                             <div class="flex justify-between items-center mb-1.5">
-                                <span class="text-slate-300 font-medium">Visibility & Contrast Mode</span>
-                                <span class="text-[10px] text-emerald-400 font-semibold">Recommended: Auto</span>
+                                <span class="text-slate-300 font-medium">Visibility / Color Contrast</span>
+                                <span class="text-[10px] text-amber-400 font-semibold">Adaptive</span>
                             </div>
                             <div class="grid grid-cols-2 gap-2">
-                                <button type="button" onclick="setColorMode('auto')" id="btnColorAuto" class="p-2 rounded-lg bg-emerald-500 text-white font-bold text-center text-[11px] shadow flex items-center justify-center gap-1">
+                                <button type="button" onclick="setColorMode('auto')" id="btnColorAuto" class="p-2 rounded-lg bg-amber-500 text-slate-950 font-bold text-center text-[11px] shadow flex items-center justify-center gap-1">
                                     <span>⚡ Auto-Contrast</span>
                                 </button>
                                 <button type="button" onclick="setColorMode('white')" id="btnColorWhite" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-center text-[11px] border border-slate-700 flex items-center justify-center gap-1">
                                     <span>⚪ Crisp White</span>
                                 </button>
                                 <button type="button" onclick="setColorMode('original')" id="btnColorOriginal" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-center text-[11px] border border-slate-700 flex items-center justify-center gap-1">
-                                    <span>🌸 Brand Colors</span>
+                                    <span>💎 Brand Gold</span>
                                 </button>
                                 <button type="button" onclick="setColorMode('gold')" id="btnColorGold" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-center text-[11px] border border-slate-700 flex items-center justify-center gap-1">
                                     <span>✨ Luxury Gold</span>
@@ -393,7 +322,7 @@
                                 <button type="button" onclick="setLogoPos('top_center')" data-pos="top_center" class="pos-btn p-2 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 text-center font-mono text-[10px]">Top</button>
                                 <button type="button" onclick="setLogoPos('top_right')" data-pos="top_right" class="pos-btn p-2 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 text-center font-mono text-[10px]">TR</button>
                                 
-                                <button type="button" onclick="setLogoPos('center_left')" data-pos="center_left" class="pos-btn p-2 rounded-lg bg-emerald-500 text-white font-bold text-center font-mono text-[10px]">Left</button>
+                                <button type="button" onclick="setLogoPos('center_left')" data-pos="center_left" class="pos-btn p-2 rounded-lg bg-amber-500 text-slate-950 font-bold text-center font-mono text-[10px]">Left</button>
                                 <button type="button" onclick="setLogoPos('center')" data-pos="center" class="pos-btn p-2 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 text-center font-mono text-[10px]">Center</button>
                                 <button type="button" onclick="setLogoPos('center_right')" data-pos="center_right" class="pos-btn p-2 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 text-center font-mono text-[10px]">Right</button>
                                 
@@ -407,30 +336,24 @@
                         <div>
                             <div class="flex justify-between items-center text-slate-400 mb-1">
                                 <span class="font-medium text-slate-300">Logo Opacity</span>
-                                <span id="valOpacity" class="text-emerald-400 font-mono font-bold">85%</span>
+                                <span id="valOpacity" class="text-amber-400 font-mono font-bold">85%</span>
                             </div>
-                            <input type="range" id="rngOpacity" min="0.20" max="1.0" step="0.05" value="0.85" class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer" oninput="document.getElementById('valOpacity').textContent = Math.round(this.value*100) + '%'" onchange="autoTriggerSingle()">
-                            <div class="flex justify-between text-[10px] text-slate-400 mt-1">
-                                <span onclick="setOpacityPreset(0.50)" class="cursor-pointer hover:text-emerald-400">50% (Subtle)</span>
-                                <span onclick="setOpacityPreset(0.70)" class="cursor-pointer hover:text-emerald-400">70% (Medium)</span>
-                                <span onclick="setOpacityPreset(0.85)" class="cursor-pointer hover:text-emerald-400 text-emerald-400 font-semibold">85% (High)</span>
-                                <span onclick="setOpacityPreset(1.0)" class="cursor-pointer hover:text-emerald-400">100% (Solid)</span>
-                            </div>
+                            <input type="range" id="rngOpacity" min="0.20" max="1.0" step="0.05" value="0.85" class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer" oninput="document.getElementById('valOpacity').textContent = Math.round(this.value*100) + '%'; saveSettings();">
                         </div>
 
                         <!-- Scale Slider -->
                         <div>
                             <div class="flex justify-between text-slate-400 mb-1">
                                 <span class="font-medium text-slate-300">Logo Size (Width %)</span>
-                                <span id="valScale" class="text-emerald-400 font-mono">28%</span>
+                                <span id="valScale" class="text-amber-400 font-mono">28%</span>
                             </div>
-                            <input type="range" id="rngScale" min="0.10" max="0.65" step="0.01" value="0.28" class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer" oninput="document.getElementById('valScale').textContent = Math.round(this.value*100) + '%'" onchange="autoTriggerSingle()">
+                            <input type="range" id="rngScale" min="0.10" max="0.65" step="0.01" value="0.28" class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer" oninput="document.getElementById('valScale').textContent = Math.round(this.value*100) + '%'; saveSettings();">
                         </div>
 
                         <!-- Drop Shadow Toggle -->
                         <div class="pt-2 border-t border-slate-800 flex items-center justify-between">
                             <label class="flex items-center gap-2 cursor-pointer text-slate-300">
-                                <input type="checkbox" id="chkShadow" checked class="rounded bg-slate-800 border-slate-700 text-emerald-500 focus:ring-0" onchange="autoTriggerSingle()">
+                                <input type="checkbox" id="chkShadow" checked class="rounded bg-slate-800 border-slate-700 text-amber-500 focus:ring-0" onchange="saveSettings()">
                                 <span>High-Contrast Drop Shadow</span>
                             </label>
                         </div>
@@ -438,153 +361,89 @@
                     </div>
                 </div>
 
-                <!-- 2. Gemini Watermark Removal Controls -->
+                <!-- 2. Gemini Sparkle Watermark Cleaner -->
                 <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
                     <div class="flex items-center justify-between pb-3 border-b border-slate-800">
                         <div class="flex items-center gap-2">
-                            <div class="w-7 h-7 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center justify-center">
+                            <div class="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center">
                                 <i data-lucide="eraser" class="w-4 h-4"></i>
                             </div>
-                            <h2 class="text-sm font-bold text-white">2. Gemini Watermark Cleaner</h2>
+                            <h2 class="text-sm font-bold text-white">2. Gemini Sparkle Cleaner</h2>
                         </div>
                         <label class="relative inline-flex items-center cursor-pointer">
-                            <input type="checkbox" id="chkRemoveGemini" checked class="sr-only peer" onchange="autoTriggerSingle()">
-                            <div class="w-9 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
+                            <input type="checkbox" id="chkRemoveGemini" class="sr-only peer" onchange="saveSettings()">
+                            <div class="w-9 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-amber-500"></div>
                         </label>
                     </div>
 
-                    <div id="geminiRemovalOptions" class="space-y-3 text-xs">
+                    <div class="text-xs text-slate-400 space-y-2.5">
+                        <p class="text-[11px] text-slate-300">
+                            Smooth feather inpaint blend removes AI watermark without dark boxes or distortion.
+                        </p>
                         <div>
-                            <label class="text-slate-300 font-medium block mb-1.5">Gemini Sparkle Location</label>
+                            <label class="text-slate-300 font-medium block mb-1">Corner Location</label>
                             <div class="grid grid-cols-2 gap-2">
                                 <label class="flex items-center gap-2 p-2 bg-slate-800/80 hover:bg-slate-800 rounded-lg border border-slate-700/80 cursor-pointer">
-                                    <input type="radio" name="corner" value="bottom_right" checked class="text-emerald-500 focus:ring-0" onchange="autoTriggerSingle()">
-                                    <span class="text-slate-200">Bottom-Right (Standard)</span>
+                                    <input type="radio" name="corner" value="bottom_right" checked class="text-amber-500 focus:ring-0" onchange="saveSettings()">
+                                    <span class="text-slate-200">Bottom-Right</span>
                                 </label>
                                 <label class="flex items-center gap-2 p-2 bg-slate-800/80 hover:bg-slate-800 rounded-lg border border-slate-700/80 cursor-pointer">
-                                    <input type="radio" name="corner" value="bottom_left" class="text-emerald-500 focus:ring-0" onchange="autoTriggerSingle()">
+                                    <input type="radio" name="corner" value="bottom_left" class="text-amber-500 focus:ring-0" onchange="saveSettings()">
                                     <span class="text-slate-200">Bottom-Left</span>
                                 </label>
                             </div>
                         </div>
-
-                        <div class="grid grid-cols-2 gap-3 pt-1">
-                            <div>
-                                <div class="flex justify-between text-slate-400 mb-1">
-                                    <span>Removal Box</span>
-                                    <span id="valBoxSize" class="text-emerald-400 font-mono">9%</span>
-                                </div>
-                                <input type="range" id="rngBoxSize" min="0.04" max="0.18" step="0.01" value="0.09" class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer" oninput="document.getElementById('valBoxSize').textContent = Math.round(this.value*100) + '%'" onchange="autoTriggerSingle()">
-                            </div>
-                            <div>
-                                <div class="flex justify-between text-slate-400 mb-1">
-                                    <span>Corner Margin</span>
-                                    <span id="valMargin" class="text-emerald-400 font-mono">3.5%</span>
-                                </div>
-                                <input type="range" id="rngMargin" min="0.01" max="0.08" step="0.005" value="0.035" class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer" oninput="document.getElementById('valMargin').textContent = (this.value*100).toFixed(1) + '%'" onchange="autoTriggerSingle()">
-                            </div>
-                        </div>
                     </div>
                 </div>
 
             </div>
-        </div>
 
-        <!-- ==================== 2. BATCH PROCESSOR STUDIO ==================== -->
-        <div id="batchModeSection" class="hidden flex-col gap-6">
-            <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
-                    <div>
-                        <h2 class="text-base font-bold text-white flex items-center gap-2">
-                            <i data-lucide="layers" class="w-5 h-5 text-emerald-400"></i>
-                            Batch Image Cleaner & Watermarker
-                        </h2>
-                        <p class="text-xs text-slate-400 mt-0.5">Process 5, 20, or 100+ Gemini jewelry photos in one click with your selected brand.</p>
-                    </div>
-                    
-                    <div id="batchGlobalActions" class="hidden flex flex-wrap items-center gap-3">
-                        <button onclick="clearBatch()" class="px-3 py-2 text-xs text-rose-400 hover:bg-rose-500/10 rounded-lg border border-rose-500/20 transition">
-                            Clear All
-                        </button>
-                        <button onclick="downloadAllIndividualImages()" id="btnDownloadAllDirect" class="px-5 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-bold rounded-lg shadow-lg shadow-emerald-500/30 transition flex items-center gap-1.5">
-                            <i data-lucide="download" class="w-4 h-4"></i> Download All Images (Direct)
-                        </button>
-                        <a id="btnDownloadZip" href="#" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-lg border border-slate-700 transition flex items-center gap-1.5">
-                            <i data-lucide="archive" class="w-4 h-4"></i> Download as ZIP
-                        </a>
-                    </div>
-                </div>
-
-                <!-- Batch Upload Zone -->
-                <div id="batchDropzone" class="w-full min-h-[220px] rounded-xl border-2 border-dashed border-slate-700/80 hover:border-emerald-500/80 bg-slate-950/60 flex flex-col items-center justify-center p-6 text-center cursor-pointer transition relative group">
-                    <div class="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center group-hover:scale-110 transition duration-300">
-                        <i data-lucide="folder-up" class="w-7 h-7"></i>
-                    </div>
-                    <p class="text-sm font-semibold text-slate-200 mt-3">Select or Drag Multiple Images / Whole Folders</p>
-                    <p class="text-xs text-slate-400 mt-1">Batch clean all Gemini watermarks & apply <span id="batchSelectedBrandName" class="text-emerald-400 font-bold">Velmora Gems</span> watermark</p>
-                    <button class="mt-3 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold rounded-lg border border-slate-700 transition">
-                        Select Multiple Files
-                    </button>
-                    <input type="file" id="batchFileInput" multiple accept="image/*,video/*,.mp4,.mov,.webm,.avi,.m4v" class="hidden">
-                </div>
-
-                <!-- Batch Progress Bar -->
-                <div id="batchProgressBox" class="hidden space-y-2">
-                    <div class="flex justify-between text-xs">
-                        <span class="text-slate-300 font-medium flex items-center gap-1.5">
-                            <i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin text-emerald-400"></i> Processing Batch Images...
-                        </span>
-                        <span id="batchProgressPercent" class="text-emerald-400 font-mono font-bold">0%</span>
-                    </div>
-                    <div class="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden">
-                        <div id="batchProgressBar" class="h-full bg-emerald-500 transition-all duration-300 rounded-full" style="width: 0%;"></div>
-                    </div>
-                </div>
-
-                <!-- Batch Results Grid -->
-                <div id="batchResultsContainer" class="hidden space-y-3">
-                    <div class="flex items-center justify-between text-xs text-slate-400">
-                        <span>Processed Output Files (<span id="batchCountText">0</span>)</span>
-                        <span class="text-emerald-400 font-medium">Ready for Etsy & Catalog</span>
-                    </div>
-                    <div id="batchGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-                        <!-- Thumbnails injected dynamically -->
-                    </div>
-                </div>
-            </div>
         </div>
 
     </main>
 
+    <!-- Full Image Preview Lightbox Modal -->
+    <div id="previewModal" class="fixed inset-0 z-[990] bg-slate-950/90 backdrop-blur-md hidden flex items-center justify-center p-4">
+        <div class="relative max-w-4xl max-h-[90vh] bg-slate-900 border border-slate-800 rounded-3xl p-4 flex flex-col items-center gap-3 shadow-2xl overflow-hidden">
+            <div class="w-full flex items-center justify-between pb-2 border-b border-slate-800">
+                <span id="previewModalTitle" class="text-xs font-semibold text-slate-200 truncate">Image Preview</span>
+                <div class="flex items-center gap-2">
+                    <a id="previewModalDownload" href="#" download class="px-3 py-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-lg flex items-center gap-1">
+                        <i data-lucide="download" class="w-3.5 h-3.5"></i> Download
+                    </a>
+                    <button onclick="closePreviewModal()" class="p-1 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="flex-1 overflow-auto flex items-center justify-center max-h-[75vh]">
+                <img id="previewModalImg" src="" class="max-h-[75vh] w-auto object-contain rounded-xl shadow-lg" alt="Full Preview">
+                <video id="previewModalVid" src="" class="hidden max-h-[75vh] w-auto object-contain rounded-xl shadow-lg" controls autoplay loop></video>
+            </div>
+        </div>
+    </div>
+
     <!-- Global Toast Notification -->
     <div id="toast" class="fixed bottom-5 right-5 bg-slate-900 border border-slate-700 text-slate-100 px-4 py-3 rounded-xl shadow-2xl z-50 flex items-center gap-2 transform translate-y-20 opacity-0 transition duration-300 pointer-events-none text-xs">
-        <i data-lucide="check-circle" class="w-4 h-4 text-emerald-400" id="toastIcon"></i>
+        <i data-lucide="check-circle" class="w-4 h-4 text-amber-400" id="toastIcon"></i>
         <span id="toastMsg">Notification</span>
     </div>
 
     <!-- Frontend Script -->
     <script>
-        // ==================== SECURITY & CONFIGURATION ====================
+        // ==================== CONFIGURATION & DEFAULTS ====================
         const MASTER_PIN = "1243";
-        let currentSingleFile = null;
-        let currentProcessedUrl = null;
-        let currentProcessedBlob = null;
-        let currentBrand = 'velmora'; // 'velmora' or 'shreeja'
+        let currentBrand = 'shreeja'; // Default to Shreeja Gems
         let currentColorMode = 'auto'; // 'auto', 'white', 'original', 'gold'
         let selectedLogoPos = 'center_left';
-        let selectedInpaintMethod = 'telea';
-        let currentViewMode = 'split';
-        let isProcessing = false;
+        let currentBatchFiles = [];
         let currentBatchResults = [];
-
-        // Preload cache for logos
         const logoImgCache = {};
 
         document.addEventListener('DOMContentLoaded', () => {
             checkPinAuthOnLoad();
             lucide.createIcons();
-            setupDragAndDrop();
-            setupSplitSlider();
+            setupBatchEvents();
             loadSavedSettings();
             updateBrandUI();
             updateColorModeUI();
@@ -647,7 +506,7 @@
             showToast('Studio Locked.');
         }
 
-        // ==================== UI HELPERS ====================
+        // ==================== TOAST & UI ====================
         function showToast(msg, isError = false) {
             const toast = document.getElementById('toast');
             const toastMsg = document.getElementById('toastMsg');
@@ -660,38 +519,23 @@
             }, 3000);
         }
 
-        function switchMode(mode) {
-            const singleSec = document.getElementById('singleModeSection');
-            const batchSec = document.getElementById('batchModeSection');
-            const tabSingle = document.getElementById('tabSingle');
-            const tabBatch = document.getElementById('tabBatch');
-
-            if (mode === 'single') {
-                singleSec.classList.remove('hidden');
-                batchSec.classList.add('hidden');
-                tabSingle.className = 'px-5 py-2 text-sm font-semibold rounded-lg transition flex items-center gap-2 bg-emerald-500 text-white shadow';
-                tabBatch.className = 'px-5 py-2 text-sm font-semibold rounded-lg transition flex items-center gap-2 text-slate-400 hover:text-white';
-            } else {
-                singleSec.classList.add('hidden');
-                batchSec.classList.remove('hidden');
-                tabSingle.className = 'px-5 py-2 text-sm font-semibold rounded-lg transition flex items-center gap-2 text-slate-400 hover:text-white';
-                tabBatch.className = 'px-5 py-2 text-sm font-semibold rounded-lg transition flex items-center gap-2 bg-emerald-500 text-white shadow';
-            }
-        }
-
         function selectBrand(brand) {
             currentBrand = brand;
             updateBrandUI();
             saveSettings();
-            showToast(`Selected: ${brand === 'velmora' ? 'Velmora Gems' : 'Shreeja Gems'}`);
-            autoTriggerSingle();
+            showToast(`Selected: ${brand === 'shreeja' ? 'Shreeja Gems' : 'Velmora Gems'}`);
+            if (currentBatchFiles.length > 0) {
+                processBatch(currentBatchFiles);
+            }
         }
 
         function setColorMode(mode) {
             currentColorMode = mode;
             updateColorModeUI();
             saveSettings();
-            autoTriggerSingle();
+            if (currentBatchFiles.length > 0) {
+                processBatch(currentBatchFiles);
+            }
         }
 
         function updateColorModeUI() {
@@ -700,16 +544,12 @@
                 const btn = document.getElementById('btnColor' + m.charAt(0).toUpperCase() + m.slice(1));
                 if (btn) {
                     if (m === currentColorMode) {
-                        btn.className = 'p-2 rounded-lg bg-emerald-500 text-white font-bold text-center text-[11px] shadow flex items-center justify-center gap-1';
+                        btn.className = 'p-2 rounded-lg bg-amber-500 text-slate-950 font-bold text-center text-[11px] shadow flex items-center justify-center gap-1';
                     } else {
                         btn.className = 'p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-center text-[11px] border border-slate-700 flex items-center justify-center gap-1';
                     }
                 }
             });
-        }
-
-        function getActiveLogoFilename() {
-            return currentBrand === 'velmora' ? 'velmora_gems.png' : 'shreeja_gems.png';
         }
 
         function updateBrandUI() {
@@ -718,25 +558,25 @@
             const checkVelmora = document.getElementById('checkVelmora');
             const checkShreeja = document.getElementById('checkShreeja');
             const brandActiveInd = document.getElementById('brandActiveIndicator');
-            const currentBrandBadge = document.getElementById('currentBrandBadge');
             const batchSelectedBrandName = document.getElementById('batchSelectedBrandName');
+            const headerBrandBadge = document.getElementById('headerBrandBadge');
 
-            if (currentBrand === 'velmora') {
-                if (cardVelmora) cardVelmora.className = 'brand-card-active p-3 rounded-xl border border-slate-700 bg-slate-950/60 hover:border-emerald-500/60 transition text-left flex flex-col gap-2 group';
-                if (cardShreeja) cardShreeja.className = 'p-3 rounded-xl border border-slate-700 bg-slate-950/60 hover:border-amber-500/60 transition text-left flex flex-col gap-2 group';
-                if (checkVelmora) checkVelmora.classList.remove('hidden');
-                if (checkShreeja) checkShreeja.classList.add('hidden');
-                if (brandActiveInd) brandActiveInd.textContent = 'Velmora Gems Active';
-                if (currentBrandBadge) currentBrandBadge.textContent = 'Velmora Gems';
-                if (batchSelectedBrandName) batchSelectedBrandName.textContent = 'Velmora Gems';
-            } else {
-                if (cardShreeja) cardShreeja.className = 'brand-card-active p-3 rounded-xl border border-slate-700 bg-slate-950/60 hover:border-amber-500/60 transition text-left flex flex-col gap-2 group';
+            if (currentBrand === 'shreeja') {
+                if (cardShreeja) cardShreeja.className = 'brand-card-active-shreeja p-3 rounded-xl border border-amber-500 bg-slate-950/60 hover:border-amber-400 transition text-left flex flex-col gap-2 group';
                 if (cardVelmora) cardVelmora.className = 'p-3 rounded-xl border border-slate-700 bg-slate-950/60 hover:border-emerald-500/60 transition text-left flex flex-col gap-2 group';
                 if (checkShreeja) checkShreeja.classList.remove('hidden');
                 if (checkVelmora) checkVelmora.classList.add('hidden');
                 if (brandActiveInd) brandActiveInd.textContent = 'Shreeja Gems Active';
-                if (currentBrandBadge) currentBrandBadge.textContent = 'Shreeja Gems';
                 if (batchSelectedBrandName) batchSelectedBrandName.textContent = 'Shreeja Gems';
+                if (headerBrandBadge) headerBrandBadge.textContent = 'Shreeja Gems';
+            } else {
+                if (cardVelmora) cardVelmora.className = 'brand-card-active-velmora p-3 rounded-xl border border-emerald-500 bg-slate-950/60 hover:border-emerald-400 transition text-left flex flex-col gap-2 group';
+                if (cardShreeja) cardShreeja.className = 'p-3 rounded-xl border border-slate-700 bg-slate-950/60 hover:border-amber-500/60 transition text-left flex flex-col gap-2 group';
+                if (checkVelmora) checkVelmora.classList.remove('hidden');
+                if (checkShreeja) checkShreeja.classList.add('hidden');
+                if (brandActiveInd) brandActiveInd.textContent = 'Velmora Gems Active';
+                if (batchSelectedBrandName) batchSelectedBrandName.textContent = 'Velmora Gems';
+                if (headerBrandBadge) headerBrandBadge.textContent = 'Velmora Gems';
             }
         }
 
@@ -744,163 +584,65 @@
             selectedLogoPos = pos;
             document.querySelectorAll('.pos-btn').forEach(btn => {
                 if (btn.getAttribute('data-pos') === pos) {
-                    btn.className = 'pos-btn p-2 rounded-lg bg-emerald-500 text-white font-bold text-center font-mono text-[10px] shadow';
+                    btn.className = 'pos-btn p-2 rounded-lg bg-amber-500 text-slate-950 font-bold text-center font-mono text-[10px] shadow';
                 } else {
                     btn.className = 'pos-btn p-2 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 text-center font-mono text-[10px]';
                 }
             });
             saveSettings();
-            autoTriggerSingle();
-        }
-
-        function setOpacityPreset(val) {
-            document.getElementById('rngOpacity').value = val;
-            document.getElementById('valOpacity').textContent = Math.round(val * 100) + '%';
-            saveSettings();
-            autoTriggerSingle();
-        }
-
-        function setViewMode(mode) {
-            currentViewMode = mode;
-            const btnSplit = document.getElementById('btnViewSplit');
-            const btnAfter = document.getElementById('btnViewAfter');
-            const btnBefore = document.getElementById('btnViewBefore');
-            const beforeBox = document.getElementById('comparisonBefore');
-            const divider = document.getElementById('comparisonDivider');
-            const badgeAfter = document.getElementById('badgeAfter');
-
-            [btnSplit, btnAfter, btnBefore].forEach(b => {
-                if (b) b.className = 'px-2.5 py-1 rounded font-medium text-slate-400 hover:text-white';
-            });
-
-            if (mode === 'split') {
-                if (btnSplit) btnSplit.className = 'px-2.5 py-1 rounded font-medium bg-emerald-500 text-white';
-                if (beforeBox) { beforeBox.style.display = 'block'; beforeBox.style.width = '50%'; }
-                if (divider) { divider.style.display = 'block'; divider.style.left = '50%'; }
-                if (badgeAfter) badgeAfter.style.display = 'block';
-            } else if (mode === 'after') {
-                if (btnAfter) btnAfter.className = 'px-2.5 py-1 rounded font-medium bg-emerald-500 text-white';
-                if (beforeBox) beforeBox.style.display = 'none';
-                if (divider) divider.style.display = 'none';
-                if (badgeAfter) badgeAfter.style.display = 'block';
-            } else if (mode === 'before') {
-                if (btnBefore) btnBefore.className = 'px-2.5 py-1 rounded font-medium bg-emerald-500 text-white';
-                if (beforeBox) { beforeBox.style.display = 'block'; beforeBox.style.width = '100%'; }
-                if (divider) divider.style.display = 'none';
-                if (badgeAfter) badgeAfter.style.display = 'none';
+            if (currentBatchFiles.length > 0) {
+                processBatch(currentBatchFiles);
             }
         }
 
-        function setupDragAndDrop() {
-            const dropzone = document.getElementById('dropzone');
-            const fileInput = document.getElementById('fileInput');
+        // ==================== BATCH DRAG & DROP ====================
+        function setupBatchEvents() {
+            const dropzone = document.getElementById('batchDropzone');
+            const fileInput = document.getElementById('batchFileInput');
 
-            dropzone.addEventListener('click', (e) => {
-                if (!currentSingleFile) fileInput.click();
-            });
-
+            dropzone.addEventListener('click', () => fileInput.click());
             fileInput.addEventListener('change', (e) => {
-                if (e.target.files && e.target.files[0]) {
-                    loadSingleFile(e.target.files[0]);
+                if (e.target.files && e.target.files.length > 0) {
+                    currentBatchFiles = Array.from(e.target.files);
+                    processBatch(currentBatchFiles);
                 }
             });
 
             ['dragenter', 'dragover'].forEach(name => {
                 dropzone.addEventListener(name, (e) => {
                     e.preventDefault();
-                    dropzone.classList.add('border-emerald-500', 'bg-emerald-500/5');
+                    dropzone.classList.add('border-amber-500', 'bg-amber-500/5');
                 });
             });
 
             ['dragleave', 'drop'].forEach(name => {
                 dropzone.addEventListener(name, (e) => {
                     e.preventDefault();
-                    dropzone.classList.remove('border-emerald-500', 'bg-emerald-500/5');
+                    dropzone.classList.remove('border-amber-500', 'bg-amber-500/5');
                 });
             });
 
             dropzone.addEventListener('drop', (e) => {
-                if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-                    loadSingleFile(e.dataTransfer.files[0]);
+                if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                    currentBatchFiles = Array.from(e.dataTransfer.files);
+                    processBatch(currentBatchFiles);
                 }
             });
 
             window.addEventListener('paste', (e) => {
                 const items = e.clipboardData ? e.clipboardData.items : [];
+                const pastedFiles = [];
                 for (let i = 0; i < items.length; i++) {
                     if (items[i].type && items[i].type.indexOf('image') !== -1) {
-                        const blob = items[i].getAsFile();
-                        loadSingleFile(blob);
-                        showToast('Image pasted from clipboard!');
-                        break;
+                        pastedFiles.push(items[i].getAsFile());
                     }
                 }
-            });
-
-            const batchDropzone = document.getElementById('batchDropzone');
-            const batchFileInput = document.getElementById('batchFileInput');
-
-            batchDropzone.addEventListener('click', () => batchFileInput.click());
-            batchFileInput.addEventListener('change', (e) => {
-                if (e.target.files && e.target.files.length > 0) {
-                    processBatch(e.target.files);
+                if (pastedFiles.length > 0) {
+                    currentBatchFiles = pastedFiles;
+                    processBatch(currentBatchFiles);
+                    showToast(`${pastedFiles.length} photo(s) pasted from clipboard!`);
                 }
             });
-
-            ['dragenter', 'dragover'].forEach(name => {
-                batchDropzone.addEventListener(name, (e) => {
-                    e.preventDefault();
-                    batchDropzone.classList.add('border-emerald-500', 'bg-emerald-500/5');
-                });
-            });
-
-            ['dragleave', 'drop'].forEach(name => {
-                batchDropzone.addEventListener(name, (e) => {
-                    e.preventDefault();
-                    batchDropzone.classList.remove('border-emerald-500', 'bg-emerald-500/5');
-                });
-            });
-
-            batchDropzone.addEventListener('drop', (e) => {
-                if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-                    processBatch(e.dataTransfer.files);
-                }
-            });
-        }
-
-        function loadSingleFile(file) {
-            currentSingleFile = file;
-            const isVideo = (file.type && file.type.startsWith('video/')) || /\.(mp4|mov|webm|avi|m4v)$/i.test(file.name || '');
-
-            if (isVideo) {
-                document.getElementById('emptyState').classList.add('hidden');
-                document.getElementById('previewContainer').classList.remove('hidden');
-                document.getElementById('canvasControls').style.display = 'none';
-                document.getElementById('bottomActionRow').classList.remove('hidden');
-                document.getElementById('imageMeta').textContent = `${file.name || 'Video'} • ${(file.size/(1024*1024)).toFixed(1)} MB`;
-                processSingle();
-            } else {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    document.getElementById('originalImg').src = e.target.result;
-                    document.getElementById('emptyState').classList.add('hidden');
-                    document.getElementById('previewContainer').classList.remove('hidden');
-                    document.getElementById('canvasControls').style.display = 'flex';
-                    document.getElementById('bottomActionRow').classList.remove('hidden');
-                    document.getElementById('imageMeta').textContent = `${file.name || 'Image'} • ${(file.size/1024).toFixed(1)} KB`;
-                    processSingle();
-                };
-                reader.readAsDataURL(file);
-            }
-        }
-
-        let debounceTimer = null;
-        function autoTriggerSingle() {
-            if (!currentSingleFile) return;
-            clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(() => {
-                processSingle();
-            }, 250);
         }
 
         // ==================== IN-BROWSER HTML5 CANVAS ENGINE ====================
@@ -923,89 +665,69 @@
             });
         }
 
-        function removeGeminiWatermarkCanvas(ctx, width, height, corner, boxSizePct, marginPct) {
-            const boxSize = Math.max(20, Math.min(width, height) * boxSizePct);
-            const margin = Math.max(5, Math.min(width, height) * marginPct);
+        // Safe inpaint: samples adjacent natural texture with feathered circular mask (NO dark/black box!)
+        function removeGeminiWatermarkCanvas(ctx, width, height, corner) {
+            const boxSize = Math.max(24, Math.round(Math.min(width, height) * 0.08));
+            const margin = Math.max(6, Math.round(Math.min(width, height) * 0.025));
 
-            let x = 0, y = 0;
+            let targetX = 0, targetY = 0;
+            let srcX = 0, srcY = 0;
+
             if (corner === 'bottom_right') {
-                x = width - boxSize - margin;
-                y = height - boxSize - margin;
+                targetX = width - boxSize - margin;
+                targetY = height - boxSize - margin;
+                srcX = Math.max(0, targetX - Math.round(boxSize * 0.4));
+                srcY = Math.max(0, targetY - Math.round(boxSize * 1.1));
             } else if (corner === 'bottom_left') {
-                x = margin;
-                y = height - boxSize - margin;
-            } else if (corner === 'top_right') {
-                x = width - boxSize - margin;
-                y = margin;
-            } else if (corner === 'top_left') {
-                x = margin;
-                y = margin;
+                targetX = margin;
+                targetY = height - boxSize - margin;
+                srcX = Math.min(width - boxSize, targetX + Math.round(boxSize * 0.4));
+                srcY = Math.max(0, targetY - Math.round(boxSize * 1.1));
             }
 
-            x = Math.max(0, Math.min(x, width - boxSize));
-            y = Math.max(0, Math.min(y, height - boxSize));
-            const patchW = Math.min(boxSize, width - x);
-            const patchH = Math.min(boxSize, height - y);
+            targetX = Math.max(0, Math.min(targetX, width - boxSize));
+            targetY = Math.max(0, Math.min(targetY, height - boxSize));
 
             try {
-                const samplePad = 8;
-                const sx = Math.max(0, x - samplePad);
-                const sy = Math.max(0, y - samplePad);
-                const sw = Math.min(width - sx, patchW + samplePad * 2);
-                const sh = Math.min(height - sy, patchH + samplePad * 2);
+                const offCanvas = document.createElement('canvas');
+                offCanvas.width = boxSize;
+                offCanvas.height = boxSize;
+                const offCtx = offCanvas.getContext('2d');
 
-                const surroundingData = ctx.getImageData(sx, sy, sw, sh);
-                const d = surroundingData.data;
+                // Draw source patch
+                offCtx.drawImage(ctx.canvas, srcX, srcY, boxSize, boxSize, 0, 0, boxSize, boxSize);
 
-                let rSum = 0, gSum = 0, bSum = 0, count = 0;
-                for (let py = 0; py < sh; py++) {
-                    for (let px = 0; px < sw; px++) {
-                        const isInner = (px >= samplePad && px < samplePad + patchW && py >= samplePad && py < samplePad + patchH);
-                        if (!isInner) {
-                            const idx = (py * sw + px) * 4;
-                            rSum += d[idx];
-                            gSum += d[idx + 1];
-                            bSum += d[idx + 2];
-                            count++;
-                        }
-                    }
-                }
-
-                const avgR = count > 0 ? rSum / count : 20;
-                const avgG = count > 0 ? gSum / count : 20;
-                const avgB = count > 0 ? bSum / count : 20;
-
-                const grad = ctx.createRadialGradient(
-                    x + patchW / 2, y + patchH / 2, 2,
-                    x + patchW / 2, y + patchH / 2, Math.max(patchW, patchH) * 0.75
+                // Create soft radial alpha gradient
+                offCtx.globalCompositeOperation = 'destination-in';
+                const maskGrad = offCtx.createRadialGradient(
+                    boxSize / 2, boxSize / 2, boxSize * 0.1,
+                    boxSize / 2, boxSize / 2, boxSize * 0.48
                 );
-                grad.addColorStop(0, `rgba(${Math.round(avgR)}, ${Math.round(avgG)}, ${Math.round(avgB)}, 0.98)`);
-                grad.addColorStop(1, `rgba(${Math.round(avgR)}, ${Math.round(avgG)}, ${Math.round(avgB)}, 0.88)`);
+                maskGrad.addColorStop(0, 'rgba(0, 0, 0, 1.0)');
+                maskGrad.addColorStop(0.65, 'rgba(0, 0, 0, 0.85)');
+                maskGrad.addColorStop(1, 'rgba(0, 0, 0, 0.0)');
 
-                ctx.save();
-                ctx.fillStyle = grad;
-                ctx.filter = 'blur(6px)';
-                ctx.fillRect(x - 2, y - 2, patchW + 4, patchH + 4);
-                ctx.restore();
+                offCtx.fillStyle = maskGrad;
+                offCtx.fillRect(0, 0, boxSize, boxSize);
 
+                // Blend softly over watermark location
                 ctx.save();
-                ctx.fillStyle = `rgb(${Math.round(avgR)}, ${Math.round(avgG)}, ${Math.round(avgB)})`;
-                ctx.filter = 'blur(12px)';
-                ctx.fillRect(x + 2, y + 2, patchW - 4, patchH - 4);
+                ctx.globalAlpha = 0.95;
+                ctx.drawImage(offCanvas, targetX, targetY);
                 ctx.restore();
             } catch (e) {
-                ctx.fillStyle = '#111827';
-                ctx.fillRect(x, y, patchW, patchH);
+                // If anything is unsupported, bypass cleanly without drawing any black box!
             }
         }
 
+        // Draw brand logo on canvas with Auto-Contrast luminance detection
         async function drawBrandLogoCanvas(ctx, width, height, brand, colorMode, pos, scalePct, opacityPct, addShadow) {
             const minDim = Math.min(width, height);
             const targetW = minDim * scalePct;
             const margin = minDim * 0.04;
 
             let sampleX = margin;
-            let sampleY = margin;
+            let sampleY = (height - (targetW * 0.35)) / 2;
             let sampleW = targetW;
             let sampleH = targetW * 0.35;
 
@@ -1038,6 +760,7 @@
                 sampleY = margin;
             }
 
+            // Luminance detection
             let isDarkBg = false;
             try {
                 const safeSx = Math.max(0, Math.min(sampleX, width - 1));
@@ -1047,8 +770,7 @@
 
                 const imgData = ctx.getImageData(safeSx, safeSy, safeSw, safeSh);
                 const data = imgData.data;
-                let totalLum = 0;
-                let samples = 0;
+                let totalLum = 0, samples = 0;
                 for (let i = 0; i < data.length; i += 16) {
                     const lum = 0.2126 * data[i] + 0.7152 * data[i+1] + 0.0722 * data[i+2];
                     totalLum += lum;
@@ -1061,17 +783,17 @@
             }
 
             let logoPath = '';
-            if (brand === 'velmora') {
-                if (colorMode === 'white' || (colorMode === 'auto' && isDarkBg)) {
-                    logoPath = 'assets/logos/velmora_gems_white.png';
-                } else {
-                    logoPath = 'assets/logos/velmora_gems.png';
-                }
-            } else {
+            if (brand === 'shreeja') {
                 if (colorMode === 'white' || (colorMode === 'auto' && isDarkBg)) {
                     logoPath = 'assets/logos/shreeja_gems_white.png';
                 } else {
                     logoPath = 'assets/logos/shreeja_gems.png';
+                }
+            } else {
+                if (colorMode === 'white' || (colorMode === 'auto' && isDarkBg)) {
+                    logoPath = 'assets/logos/velmora_gems_white.png';
+                } else {
+                    logoPath = 'assets/logos/velmora_gems.png';
                 }
             }
 
@@ -1123,6 +845,7 @@
             ctx.restore();
         }
 
+        // Process a single image file on client canvas
         function processImageOnClient(file) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -1135,19 +858,20 @@
                             canvas.height = img.naturalHeight || img.height;
                             const ctx = canvas.getContext('2d', { willReadFrequently: true });
 
+                            // Draw original photo
                             ctx.drawImage(img, 0, 0);
 
+                            // Optional Gemini clean (Safe soft feather inpaint)
                             const removeGemini = document.getElementById('chkRemoveGemini').checked;
                             const corner = document.querySelector('input[name="corner"]:checked') ? document.querySelector('input[name="corner"]:checked').value : 'bottom_right';
-                            const boxSizePct = parseFloat(document.getElementById('rngBoxSize').value) || 0.09;
-                            const marginPct = parseFloat(document.getElementById('rngMargin').value) || 0.035;
 
                             if (removeGemini) {
-                                removeGeminiWatermarkCanvas(ctx, canvas.width, canvas.height, corner, boxSizePct, marginPct);
+                                removeGeminiWatermarkCanvas(ctx, canvas.width, canvas.height, corner);
                             }
 
-                            const scalePct = parseFloat(document.getElementById('rngScale').value) || 0.32;
-                            const opacityPct = parseFloat(document.getElementById('rngOpacity').value) || 0.90;
+                            // Brand logo overlay
+                            const scalePct = parseFloat(document.getElementById('rngScale').value) || 0.28;
+                            const opacityPct = parseFloat(document.getElementById('rngOpacity').value) || 0.85;
                             const shadow = document.getElementById('chkShadow').checked;
 
                             await drawBrandLogoCanvas(ctx, canvas.width, canvas.height, currentBrand, currentColorMode, selectedLogoPos, scalePct, opacityPct, shadow);
@@ -1172,192 +896,25 @@
             });
         }
 
-        // ==================== SINGLE IMAGE PROCESSING ====================
-        async function processSingle() {
-            if (!currentSingleFile || isProcessing) return;
-            isProcessing = true;
-
-            const loadingOverlay = document.getElementById('loadingOverlay');
-            loadingOverlay.classList.remove('hidden');
-
-            const isVideo = (currentSingleFile.type && currentSingleFile.type.startsWith('video/')) || /\.(mp4|mov|webm|avi|m4v)$/i.test(currentSingleFile.name || '');
-            const logoName = getActiveLogoFilename();
-
-            // Try backend process.php first (for local XAMPP with Python & FFmpeg)
-            let handledByServer = false;
-            try {
-                const formData = new FormData();
-                formData.append('action', 'process_single');
-                formData.append('image', currentSingleFile);
-                formData.append('remove_gemini', document.getElementById('chkRemoveGemini').checked);
-                
-                const corner = document.querySelector('input[name="corner"]:checked') ? document.querySelector('input[name="corner"]:checked').value : 'bottom_right';
-                formData.append('corner', corner);
-                formData.append('box_size', document.getElementById('rngBoxSize').value);
-                formData.append('margin', document.getElementById('rngMargin').value);
-                formData.append('method', selectedInpaintMethod);
-                formData.append('logo_name', logoName);
-                formData.append('logo_pos', selectedLogoPos);
-                formData.append('logo_scale', document.getElementById('rngScale').value);
-                formData.append('logo_opacity', document.getElementById('rngOpacity').value);
-                formData.append('logo_color', currentColorMode);
-                formData.append('add_shadow', document.getElementById('chkShadow').checked);
-
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 8000);
-
-                const res = await fetch('process.php', { method: 'POST', body: formData, signal: controller.signal });
-                clearTimeout(timeoutId);
-
-                if (res.ok) {
-                    const data = await res.json();
-                    if (data.success) {
-                        handledByServer = true;
-                        currentProcessedUrl = data.processed_url;
-                        
-                        if (data.is_video) {
-                            document.getElementById('comparisonBox').classList.add('hidden');
-                            document.getElementById('videoContainer').classList.remove('hidden');
-                            const video = document.getElementById('processedVideo');
-                            video.src = data.processed_url + '?t=' + Date.now();
-                            video.play().catch(() => {});
-                        } else {
-                            document.getElementById('videoContainer').classList.add('hidden');
-                            document.getElementById('comparisonBox').classList.remove('hidden');
-                            const processedImg = document.getElementById('processedImg');
-                            processedImg.src = data.processed_url + '?t=' + Date.now();
-                            processedImg.onload = () => syncImageDimensions();
-                        }
-                        showToast(`${currentBrand === 'velmora' ? 'Velmora' : 'Shreeja'} watermark applied!`);
-                    }
-                }
-            } catch (e) {
-                // Server unavailable, fall back to client-side
-            }
-
-            // Client-side canvas fallback (for GitHub Pages & offline)
-            if (!handledByServer) {
-                if (isVideo) {
-                    showToast('MP4 video watermark requires local XAMPP backend with FFmpeg', true);
-                } else {
-                    try {
-                        const result = await processImageOnClient(currentSingleFile);
-                        currentProcessedUrl = result.blobUrl;
-                        currentProcessedBlob = result.blob;
-
-                        document.getElementById('videoContainer').classList.add('hidden');
-                        document.getElementById('comparisonBox').classList.remove('hidden');
-                        const processedImg = document.getElementById('processedImg');
-                        processedImg.src = result.blobUrl;
-                        processedImg.onload = () => syncImageDimensions();
-                        showToast(`${currentBrand === 'velmora' ? 'Velmora' : 'Shreeja'} watermark applied in-browser!`);
-                    } catch (err) {
-                        showToast('Error processing image: ' + err.message, true);
-                    }
-                }
-            }
-
-            loadingOverlay.classList.add('hidden');
-            isProcessing = false;
-        }
-
-        function syncImageDimensions() {
-            const proc = document.getElementById('processedImg');
-            const orig = document.getElementById('originalImg');
-            if (proc.clientWidth > 0) {
-                orig.style.width = proc.clientWidth + 'px';
-                orig.style.height = proc.clientHeight + 'px';
-            }
-        }
-
-        function setupSplitSlider() {
-            const container = document.getElementById('comparisonBox');
-            const before = document.getElementById('comparisonBefore');
-            const divider = document.getElementById('comparisonDivider');
-            let isDragging = false;
-
-            function updatePosition(clientX) {
-                if (currentViewMode !== 'split') return;
-                const rect = container.getBoundingClientRect();
-                let x = clientX - rect.left;
-                if (x < 0) x = 0;
-                if (x > rect.width) x = rect.width;
-                const pct = (x / rect.width) * 100;
-                before.style.width = pct + '%';
-                divider.style.left = pct + '%';
-            }
-
-            container.addEventListener('mousedown', (e) => {
-                if (currentViewMode !== 'split') return;
-                isDragging = true;
-                updatePosition(e.clientX);
-            });
-            window.addEventListener('mouseup', () => isDragging = false);
-            window.addEventListener('mousemove', (e) => {
-                if (isDragging) updatePosition(e.clientX);
-            });
-
-            container.addEventListener('touchstart', (e) => {
-                if (currentViewMode !== 'split') return;
-                isDragging = true;
-                if (e.touches[0]) updatePosition(e.touches[0].clientX);
-            });
-            window.addEventListener('touchend', () => isDragging = false);
-            window.addEventListener('touchmove', (e) => {
-                if (isDragging && e.touches[0]) updatePosition(e.touches[0].clientX);
-            });
-
-            window.addEventListener('resize', syncImageDimensions);
-        }
-
-        function downloadProcessedSingle() {
-            if (!currentProcessedUrl) {
-                showToast('No processed image ready to download', true);
-                return;
-            }
-            const link = document.createElement('a');
-            link.href = currentProcessedUrl;
-            link.download = `${currentBrand}_cleaned_` + (currentSingleFile ? currentSingleFile.name : 'gemini_image.jpg');
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            showToast('Image downloaded successfully!');
-        }
-
-        function clearCurrentSingle() {
-            currentSingleFile = null;
-            currentProcessedUrl = null;
-            currentProcessedBlob = null;
-            document.getElementById('fileInput').value = '';
-            document.getElementById('originalImg').src = '';
-            document.getElementById('processedImg').src = '';
-            document.getElementById('emptyState').classList.remove('hidden');
-            document.getElementById('previewContainer').classList.add('hidden');
-            document.getElementById('canvasControls').style.display = 'none';
-            document.getElementById('bottomActionRow').classList.add('hidden');
-            document.getElementById('imageMeta').textContent = 'No image loaded';
-        }
-
-        // ==================== BATCH PROCESSING ====================
+        // ==================== BATCH PROCESSOR ====================
         async function processBatch(files) {
             if (!files || files.length === 0) return;
 
             const progressBox = document.getElementById('batchProgressBox');
             const progressBar = document.getElementById('batchProgressBar');
             const progressPercent = document.getElementById('batchProgressPercent');
+            const progressLabel = document.getElementById('batchProgressLabel');
             const resultsContainer = document.getElementById('batchResultsContainer');
-            const grid = document.getElementById('batchGrid');
-            const globalActions = document.getElementById('batchGlobalActions');
             const btnZip = document.getElementById('btnDownloadZip');
 
             progressBox.classList.remove('hidden');
-            progressBar.style.width = '10%';
-            progressPercent.textContent = '10%';
+            progressBar.style.width = '5%';
+            progressPercent.textContent = '5%';
 
             let handledByServer = false;
-            const logoName = getActiveLogoFilename();
+            const logoName = currentBrand === 'shreeja' ? 'shreeja_gems.png' : 'velmora_gems.png';
 
-            // Try server-side batch first
+            // Try server backend if available (local XAMPP with FFmpeg/Python)
             try {
                 const formData = new FormData();
                 formData.append('action', 'process_batch');
@@ -1367,9 +924,9 @@
                 formData.append('remove_gemini', document.getElementById('chkRemoveGemini').checked);
                 const corner = document.querySelector('input[name="corner"]:checked') ? document.querySelector('input[name="corner"]:checked').value : 'bottom_right';
                 formData.append('corner', corner);
-                formData.append('box_size', document.getElementById('rngBoxSize').value);
-                formData.append('margin', document.getElementById('rngMargin').value);
-                formData.append('method', selectedInpaintMethod);
+                formData.append('box_size', '0.08');
+                formData.append('margin', '0.025');
+                formData.append('method', 'telea');
                 formData.append('logo_name', logoName);
                 formData.append('logo_pos', selectedLogoPos);
                 formData.append('logo_scale', document.getElementById('rngScale').value);
@@ -1393,17 +950,19 @@
                     }
                 }
             } catch (e) {
-                // Server unavailable, use client-side
+                // Fall back to in-browser canvas
             }
 
-            // Client-side batch fallback
+            // Client-side Batch Fallback (GitHub Pages & in-browser)
             if (!handledByServer) {
                 currentBatchResults = [];
-                grid.innerHTML = '';
                 const total = files.length;
 
                 for (let i = 0; i < total; i++) {
                     const file = files[i];
+                    progressLabel.innerHTML = `<i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin text-amber-400"></i> Processing photo ${i+1} of ${total}...`;
+                    lucide.createIcons();
+
                     try {
                         const res = await processImageOnClient(file);
                         const cleanName = `${currentBrand}_${file.name || `photo_${i+1}.jpg`}`;
@@ -1425,34 +984,38 @@
                     e.preventDefault();
                     downloadBatchZipClient();
                 };
-                showToast(`Batch completed: ${currentBatchResults.length} images processed in browser!`);
+                showToast(`Batch completed: ${currentBatchResults.length} photos ready!`);
             }
 
-            setTimeout(() => progressBox.classList.add('hidden'), 1000);
+            setTimeout(() => progressBox.classList.add('hidden'), 800);
         }
 
         function renderBatchGrid(results, count, zipUrl) {
             const resultsContainer = document.getElementById('batchResultsContainer');
             const grid = document.getElementById('batchGrid');
-            const globalActions = document.getElementById('batchGlobalActions');
             const btnZip = document.getElementById('btnDownloadZip');
 
             grid.innerHTML = '';
-            results.forEach(item => {
+            results.forEach((item, index) => {
                 const isVid = (item.is_video) || /\.(mp4|mov|webm|avi|m4v)$/i.test(item.filename || '');
                 const mediaTag = isVid 
-                    ? `<video src="${item.url}" class="w-full h-full object-cover" muted loop onmouseover="this.play()" onmouseout="this.pause()"></video><div class="absolute bottom-1.5 left-1.5 bg-slate-950/80 border border-slate-700/60 text-emerald-400 text-[9px] px-1.5 py-0.5 rounded font-bold flex items-center gap-1"><i data-lucide="film" class="w-2.5 h-2.5"></i> MP4</div>`
+                    ? `<video src="${item.url}" class="w-full h-full object-cover" muted loop onmouseover="this.play()" onmouseout="this.pause()"></video><div class="absolute bottom-1.5 left-1.5 bg-slate-950/80 border border-slate-700/60 text-amber-400 text-[9px] px-1.5 py-0.5 rounded font-bold flex items-center gap-1"><i data-lucide="film" class="w-2.5 h-2.5"></i> MP4</div>`
                     : `<img src="${item.url}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" loading="lazy">`;
 
                 const card = document.createElement('div');
-                card.className = 'bg-slate-950/80 border border-slate-800 rounded-xl p-2 flex flex-col gap-2 group hover:border-emerald-500/50 transition';
+                card.className = 'bg-slate-950/90 border border-slate-800 rounded-xl p-2.5 flex flex-col gap-2 group hover:border-amber-500/60 transition shadow-lg';
                 card.innerHTML = `
-                    <div class="relative overflow-hidden rounded-lg aspect-square bg-slate-900 flex items-center justify-center">
+                    <div onclick="openPreviewModal(${index})" class="relative overflow-hidden rounded-lg aspect-square bg-slate-900 flex items-center justify-center cursor-pointer">
                         ${mediaTag}
+                        <div class="absolute inset-0 bg-slate-950/30 opacity-0 group-hover:opacity-100 transition flex items-center justify-center pointer-events-none">
+                            <span class="px-2.5 py-1 rounded-lg bg-slate-900/90 text-white text-[10px] font-semibold border border-slate-700 flex items-center gap-1">
+                                <i data-lucide="maximize-2" class="w-3 h-3"></i> View
+                            </span>
+                        </div>
                     </div>
                     <div class="flex items-center justify-between text-[11px] px-1">
-                        <span class="truncate text-slate-300 text-[10px]" title="${item.filename}">${item.filename}</span>
-                        <a href="${item.url}" download="${item.filename}" class="text-emerald-400 hover:text-emerald-300 p-1" title="Download">
+                        <span class="truncate text-slate-300 text-[10px] font-medium" title="${item.filename}">${item.filename}</span>
+                        <a href="${item.url}" download="${item.filename}" class="text-amber-400 hover:text-amber-300 p-1 hover:bg-slate-800 rounded transition" title="Download">
                             <i data-lucide="download" class="w-3.5 h-3.5"></i>
                         </a>
                     </div>
@@ -1460,30 +1023,36 @@
                 grid.appendChild(card);
             });
 
-            document.getElementById('batchCountText').textContent = `${count} images`;
+            document.getElementById('batchCountText').textContent = `${count}`;
             if (zipUrl && zipUrl !== '#') {
                 btnZip.href = zipUrl;
                 btnZip.onclick = null;
             }
             resultsContainer.classList.remove('hidden');
-            globalActions.classList.remove('hidden');
             lucide.createIcons();
+        }
+
+        function reprocessCurrentBatch() {
+            if (currentBatchFiles.length === 0) {
+                showToast('Please select images first', true);
+                return;
+            }
+            processBatch(currentBatchFiles);
         }
 
         async function downloadBatchZipClient() {
             if (!currentBatchResults || currentBatchResults.length === 0) {
-                showToast('No batch images available to zip', true);
+                showToast('No processed photos available to zip', true);
                 return;
             }
             if (typeof JSZip === 'undefined') {
-                showToast('JSZip library loading, falling back to direct downloads...');
                 downloadAllIndividualImages();
                 return;
             }
 
-            showToast('Generating in-browser ZIP archive...');
+            showToast('Generating in-browser ZIP file...');
             const zip = new JSZip();
-            const folder = zip.folder(`${currentBrand}_processed_images`);
+            const folder = zip.folder(`${currentBrand}_processed_photos`);
 
             for (let item of currentBatchResults) {
                 if (item.blob) {
@@ -1515,12 +1084,11 @@
 
         function downloadAllIndividualImages() {
             if (!currentBatchResults || currentBatchResults.length === 0) {
-                showToast('No processed images to download', true);
+                showToast('No photos to download', true);
                 return;
             }
 
-            showToast(`Downloading ${currentBatchResults.length} images directly to your Downloads folder...`);
-
+            showToast(`Downloading ${currentBatchResults.length} photos directly...`);
             currentBatchResults.forEach((item, index) => {
                 setTimeout(() => {
                     const link = document.createElement('a');
@@ -1534,13 +1102,52 @@
         }
 
         function clearBatch() {
+            currentBatchFiles = [];
             currentBatchResults = [];
             document.getElementById('batchFileInput').value = '';
             document.getElementById('batchResultsContainer').classList.add('hidden');
-            document.getElementById('batchGlobalActions').classList.add('hidden');
             document.getElementById('batchGrid').innerHTML = '';
+            showToast('Batch cleared');
         }
 
+        // ==================== LIGHTBOX MODAL ====================
+        function openPreviewModal(index) {
+            const item = currentBatchResults[index];
+            if (!item) return;
+
+            const modal = document.getElementById('previewModal');
+            const img = document.getElementById('previewModalImg');
+            const vid = document.getElementById('previewModalVid');
+            const title = document.getElementById('previewModalTitle');
+            const dl = document.getElementById('previewModalDownload');
+
+            title.textContent = item.filename;
+            dl.href = item.url;
+            dl.download = item.filename;
+
+            const isVid = (item.is_video) || /\.(mp4|mov|webm|avi|m4v)$/i.test(item.filename || '');
+            if (isVid) {
+                img.classList.add('hidden');
+                vid.classList.remove('hidden');
+                vid.src = item.url;
+            } else {
+                vid.classList.add('hidden');
+                img.classList.remove('hidden');
+                img.src = item.url;
+            }
+
+            modal.classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function closePreviewModal() {
+            const modal = document.getElementById('previewModal');
+            const vid = document.getElementById('previewModalVid');
+            vid.pause();
+            modal.classList.add('hidden');
+        }
+
+        // ==================== SETTINGS STORAGE ====================
         function saveSettings() {
             const settings = {
                 brand: currentBrand,
@@ -1548,7 +1155,8 @@
                 logoPos: selectedLogoPos,
                 opacity: document.getElementById('rngOpacity').value,
                 scale: document.getElementById('rngScale').value,
-                shadow: document.getElementById('chkShadow').checked
+                shadow: document.getElementById('chkShadow').checked,
+                removeGemini: document.getElementById('chkRemoveGemini').checked
             };
             localStorage.setItem('velmora_wm_settings', JSON.stringify(settings));
         }
@@ -1571,6 +1179,9 @@
                     }
                     if (s.shadow !== undefined) {
                         document.getElementById('chkShadow').checked = s.shadow;
+                    }
+                    if (s.removeGemini !== undefined) {
+                        document.getElementById('chkRemoveGemini').checked = s.removeGemini;
                     }
                 }
             } catch (e) {}
