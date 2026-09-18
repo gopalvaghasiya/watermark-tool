@@ -247,13 +247,20 @@ def apply_brand_watermark(
     bg_roi = base_rgb_arr[y1:y2, x1:x2]
 
     if bg_roi.size > 0:
-        bg_luminance = float((bg_roi[:, :, 0] * 0.2126 + bg_roi[:, :, 1] * 0.7152 + bg_roi[:, :, 2] * 0.0722).mean())
+        mean_r = float(bg_roi[:, :, 0].mean())
+        mean_g = float(bg_roi[:, :, 1].mean())
+        mean_b = float(bg_roi[:, :, 2].mean())
+        bg_luminance = float(mean_r * 0.2126 + mean_g * 0.7152 + mean_b * 0.0722)
+        # Detect human skin tone / warm surfaces
+        is_skin_tone = (mean_r > 115 and mean_g > 75 and mean_r > mean_b + 10 and bg_luminance < 195)
     else:
         bg_luminance = 128.0
+        is_skin_tone = False
 
     final_color_mode = color_override
     if color_override == "auto":
-        if bg_luminance < 135:
+        # Crisp white on dark backgrounds or skin tones for maximum clarity; brand gold on bright white studio backgrounds
+        if bg_luminance < 170 or is_skin_tone:
             final_color_mode = "white"
         else:
             final_color_mode = "original"
@@ -352,14 +359,18 @@ def precompute_watermark_for_video(
 
     if sample_frame_bgr is not None and sample_frame_bgr.size > 0:
         roi = sample_frame_bgr[y1:y2, x1:x2]
-        # BGR luminance: 0.114*B + 0.587*G + 0.299*R
-        bg_luminance = float((roi[:, :, 0] * 0.114 + roi[:, :, 1] * 0.587 + roi[:, :, 2] * 0.299).mean())
+        mean_b = float(roi[:, :, 0].mean())
+        mean_g = float(roi[:, :, 1].mean())
+        mean_r = float(roi[:, :, 2].mean())
+        bg_luminance = float(mean_b * 0.114 + mean_g * 0.587 + mean_r * 0.299)
+        is_skin_tone = (mean_r > 115 and mean_g > 75 and mean_r > mean_b + 10 and bg_luminance < 195)
     else:
         bg_luminance = 128.0
+        is_skin_tone = False
 
     final_color_mode = color_override
     if color_override == "auto":
-        if bg_luminance < 135:
+        if bg_luminance < 170 or is_skin_tone:
             final_color_mode = "white"
         else:
             final_color_mode = "original"

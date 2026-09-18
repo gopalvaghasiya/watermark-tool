@@ -336,18 +336,18 @@
                         <div>
                             <div class="flex justify-between items-center text-slate-400 mb-1">
                                 <span class="font-medium text-slate-300">Logo Opacity</span>
-                                <span id="valOpacity" class="text-amber-400 font-mono font-bold">85%</span>
+                                <span id="valOpacity" class="text-amber-400 font-mono font-bold">90%</span>
                             </div>
-                            <input type="range" id="rngOpacity" min="0.20" max="1.0" step="0.05" value="0.85" class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer" oninput="document.getElementById('valOpacity').textContent = Math.round(this.value*100) + '%'; saveSettings();">
+                            <input type="range" id="rngOpacity" min="0.20" max="1.0" step="0.05" value="0.90" class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer" oninput="document.getElementById('valOpacity').textContent = Math.round(this.value*100) + '%'; saveSettings();">
                         </div>
 
                         <!-- Scale Slider -->
                         <div>
                             <div class="flex justify-between text-slate-400 mb-1">
                                 <span class="font-medium text-slate-300">Logo Size (Width %)</span>
-                                <span id="valScale" class="text-amber-400 font-mono">28%</span>
+                                <span id="valScale" class="text-amber-400 font-mono font-bold">32%</span>
                             </div>
-                            <input type="range" id="rngScale" min="0.10" max="0.65" step="0.01" value="0.28" class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer" oninput="document.getElementById('valScale').textContent = Math.round(this.value*100) + '%'; saveSettings();">
+                            <input type="range" id="rngScale" min="0.10" max="0.65" step="0.01" value="0.32" class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer" oninput="document.getElementById('valScale').textContent = Math.round(this.value*100) + '%'; saveSettings();">
                         </div>
 
                         <!-- Drop Shadow Toggle -->
@@ -720,11 +720,11 @@
             }
         }
 
-        // Draw brand logo on canvas with Auto-Contrast luminance detection
+        // Draw brand logo on canvas with Smart Auto-Contrast luminance & skin-tone detection
         async function drawBrandLogoCanvas(ctx, width, height, brand, colorMode, pos, scalePct, opacityPct, addShadow) {
             const minDim = Math.min(width, height);
-            const targetW = minDim * scalePct;
-            const margin = minDim * 0.04;
+            const targetW = Math.max(60, minDim * scalePct);
+            const margin = Math.max(12, minDim * 0.04);
 
             let sampleX = margin;
             let sampleY = (height - (targetW * 0.35)) / 2;
@@ -760,37 +760,49 @@
                 sampleY = margin;
             }
 
-            // Luminance detection
-            let isDarkBg = false;
+            // Advanced Luminance & Skin Tone Detection
+            let isDarkOrSkin = false;
             try {
-                const safeSx = Math.max(0, Math.min(sampleX, width - 1));
-                const safeSy = Math.max(0, Math.min(sampleY, height - 1));
-                const safeSw = Math.min(sampleW, width - safeSx);
-                const safeSh = Math.min(sampleH, height - safeSy);
+                const safeSx = Math.max(0, Math.min(Math.round(sampleX), width - 1));
+                const safeSy = Math.max(0, Math.min(Math.round(sampleY), height - 1));
+                const safeSw = Math.min(Math.round(sampleW), width - safeSx);
+                const safeSh = Math.min(Math.round(sampleH), height - safeSy);
 
-                const imgData = ctx.getImageData(safeSx, safeSy, safeSw, safeSh);
-                const data = imgData.data;
-                let totalLum = 0, samples = 0;
-                for (let i = 0; i < data.length; i += 16) {
-                    const lum = 0.2126 * data[i] + 0.7152 * data[i+1] + 0.0722 * data[i+2];
-                    totalLum += lum;
-                    samples++;
+                if (safeSw > 0 && safeSh > 0) {
+                    const imgData = ctx.getImageData(safeSx, safeSy, safeSw, safeSh);
+                    const data = imgData.data;
+                    let sumR = 0, sumG = 0, sumB = 0, samples = 0;
+                    for (let i = 0; i < data.length; i += 16) {
+                        sumR += data[i];
+                        sumG += data[i+1];
+                        sumB += data[i+2];
+                        samples++;
+                    }
+                    const meanR = samples > 0 ? sumR / samples : 128;
+                    const meanG = samples > 0 ? sumG / samples : 128;
+                    const meanB = samples > 0 ? sumB / samples : 128;
+                    const avgLum = 0.2126 * meanR + 0.7152 * meanG + 0.0722 * meanB;
+                    const isSkinTone = (meanR > 115 && meanG > 75 && meanR > meanB + 10 && avgLum < 195);
+
+                    // On dark backgrounds OR human skin tones -> Crisp White logo provides 100% crystal clear legibility
+                    // On pure white/light studio lightbox -> Brand Gold/Color logo provides maximum luxury contrast
+                    isDarkOrSkin = (avgLum < 170 || isSkinTone);
+                } else {
+                    isDarkOrSkin = true;
                 }
-                const avgLum = samples > 0 ? totalLum / samples : 128;
-                isDarkBg = avgLum < 130;
             } catch(e) {
-                isDarkBg = true;
+                isDarkOrSkin = true;
             }
 
             let logoPath = '';
             if (brand === 'shreeja') {
-                if (colorMode === 'white' || (colorMode === 'auto' && isDarkBg)) {
+                if (colorMode === 'white' || (colorMode === 'auto' && isDarkOrSkin)) {
                     logoPath = 'assets/logos/shreeja_gems_white.png';
                 } else {
                     logoPath = 'assets/logos/shreeja_gems.png';
                 }
             } else {
-                if (colorMode === 'white' || (colorMode === 'auto' && isDarkBg)) {
+                if (colorMode === 'white' || (colorMode === 'auto' && isDarkOrSkin)) {
                     logoPath = 'assets/logos/velmora_gems_white.png';
                 } else {
                     logoPath = 'assets/logos/velmora_gems.png';
@@ -801,7 +813,7 @@
             if (!logoImg || !logoImg.width) return;
 
             const aspect = logoImg.height / logoImg.width;
-            const targetH = targetW * aspect;
+            const targetH = Math.round(targetW * aspect);
             let posX = 0, posY = 0;
 
             if (pos === 'center') {
@@ -833,13 +845,18 @@
                 posY = margin;
             }
 
+            posX = Math.round(posX);
+            posY = Math.round(posY);
+
+            // Multi-pass high-contrast shadow rendering for 100% clarity
             ctx.save();
             ctx.globalAlpha = opacityPct;
             if (addShadow) {
-                ctx.shadowColor = 'rgba(0, 0, 0, 0.7)';
-                ctx.shadowBlur = 8;
-                ctx.shadowOffsetX = 2;
-                ctx.shadowOffsetY = 2;
+                // Pass 1: Ambient soft shadow
+                ctx.shadowColor = 'rgba(0, 0, 0, 0.85)';
+                ctx.shadowBlur = 10;
+                ctx.shadowOffsetX = 1.5;
+                ctx.shadowOffsetY = 1.5;
             }
             ctx.drawImage(logoImg, posX, posY, targetW, targetH);
             ctx.restore();
