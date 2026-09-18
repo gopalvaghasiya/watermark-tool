@@ -12,6 +12,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
+@ini_set('upload_max_filesize', '256M');
+@ini_set('post_max_size', '256M');
+@ini_set('max_execution_time', '300');
+@ini_set('memory_limit', '512M');
+
 $base_dir = __DIR__;
 $upload_dir = $base_dir . DIRECTORY_SEPARATOR . 'uploads';
 $output_dir = $base_dir . DIRECTORY_SEPARATOR . 'outputs';

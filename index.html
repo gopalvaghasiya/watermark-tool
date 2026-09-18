@@ -913,6 +913,132 @@
             });
         }
 
+        // Process a video file on client canvas using MediaRecorder (100% in-browser)
+        function processVideoOnClient(file, onProgress) {
+            return new Promise((resolve, reject) => {
+                const video = document.createElement('video');
+                video.muted = true;
+                video.playsInline = true;
+                video.crossOrigin = "anonymous";
+                const videoUrl = URL.createObjectURL(file);
+                video.src = videoUrl;
+
+                video.onloadedmetadata = async () => {
+                    const width = video.videoWidth || 720;
+                    const height = video.videoHeight || 720;
+                    const duration = video.duration || 5;
+
+                    const canvas = document.createElement('canvas');
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+                    const scalePct = parseFloat(document.getElementById('rngScale').value) || 0.32;
+                    const opacityPct = parseFloat(document.getElementById('rngOpacity').value) || 0.90;
+                    const shadow = document.getElementById('chkShadow').checked;
+                    const removeGemini = document.getElementById('chkRemoveGemini').checked;
+                    const corner = document.querySelector('input[name="corner"]:checked') ? document.querySelector('input[name="corner"]:checked').value : 'bottom_right';
+
+                    let stream;
+                    try {
+                        stream = canvas.captureStream(30);
+                    } catch (err) {
+                        reject(new Error('In-browser video recording is not supported in this browser.'));
+                        return;
+                    }
+
+                    let mimeType = 'video/webm;codecs=vp9';
+                    if (MediaRecorder.isTypeSupported('video/mp4;codecs=avc1')) {
+                        mimeType = 'video/mp4;codecs=avc1';
+                    } else if (MediaRecorder.isTypeSupported('video/mp4')) {
+                        mimeType = 'video/mp4';
+                    } else if (MediaRecorder.isTypeSupported('video/webm;codecs=vp8')) {
+                        mimeType = 'video/webm;codecs=vp8';
+                    } else if (MediaRecorder.isTypeSupported('video/webm')) {
+                        mimeType = 'video/webm';
+                    }
+
+                    const recordedChunks = [];
+                    let mediaRecorder;
+                    try {
+                        mediaRecorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 8000000 });
+                    } catch(e) {
+                        mediaRecorder = new MediaRecorder(stream);
+                    }
+
+                    mediaRecorder.ondataavailable = (event) => {
+                        if (event.data && event.data.size > 0) {
+                            recordedChunks.push(event.data);
+                        }
+                    };
+
+                    mediaRecorder.onstop = () => {
+                        URL.revokeObjectURL(videoUrl);
+                        const outBlob = new Blob(recordedChunks, { type: mimeType.split(';')[0] || 'video/mp4' });
+                        const blobUrl = URL.createObjectURL(outBlob);
+                        resolve({
+                            blob: outBlob,
+                            blobUrl: blobUrl,
+                            is_video: true
+                        });
+                    };
+
+                    mediaRecorder.start();
+                    video.currentTime = 0;
+                    try {
+                        await video.play();
+                    } catch (e) {}
+
+                    async function renderFrame() {
+                        if (video.paused || video.ended) {
+                            if (video.ended && mediaRecorder.state !== 'inactive') {
+                                mediaRecorder.stop();
+                                return;
+                            }
+                        }
+
+                        ctx.drawImage(video, 0, 0, width, height);
+
+                        if (removeGemini) {
+                            removeGeminiWatermarkCanvas(ctx, width, height, corner);
+                        }
+
+                        await drawBrandLogoCanvas(ctx, width, height, currentBrand, currentColorMode, selectedLogoPos, scalePct, opacityPct, shadow);
+
+                        if (onProgress && duration > 0) {
+                            const prog = Math.min(0.99, video.currentTime / duration);
+                            onProgress(prog);
+                        }
+
+                        if (!video.ended) {
+                            if ('requestVideoFrameCallback' in video) {
+                                video.requestVideoFrameCallback(renderFrame);
+                            } else {
+                                requestAnimationFrame(renderFrame);
+                            }
+                        }
+                    }
+
+                    video.onended = () => {
+                        if (mediaRecorder.state !== 'inactive') {
+                            mediaRecorder.stop();
+                        }
+                    };
+
+                    if ('requestVideoFrameCallback' in video) {
+                        video.requestVideoFrameCallback(renderFrame);
+                    } else {
+                        requestAnimationFrame(renderFrame);
+                    }
+                };
+
+                video.onerror = (e) => {
+                    URL.revokeObjectURL(videoUrl);
+                    reject(new Error('Video format could not be decoded.'));
+                };
+            });
+        }
+
         // ==================== BATCH PROCESSOR ====================
         async function processBatch(files) {
             if (!files || files.length === 0) return;
@@ -952,7 +1078,7 @@
                 formData.append('add_shadow', document.getElementById('chkShadow').checked);
 
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 12000);
+                const timeoutId = setTimeout(() => controller.abort(), 20000);
 
                 const res = await fetch('process.php', { method: 'POST', body: formData, signal: controller.signal });
                 clearTimeout(timeoutId);
@@ -963,30 +1089,46 @@
                         handledByServer = true;
                         currentBatchResults = data.results;
                         renderBatchGrid(data.results, data.count, data.zip_url);
-                        showToast(`Batch completed: ${data.count} images processed!`);
+                        showToast(`Batch completed: ${data.count} file(s) processed!`);
                     }
                 }
             } catch (e) {
                 // Fall back to in-browser canvas
             }
 
-            // Client-side Batch Fallback (GitHub Pages & in-browser)
+            // Client-side Batch Fallback (GitHub Pages & in-browser for both Images & Videos)
             if (!handledByServer) {
                 currentBatchResults = [];
                 const total = files.length;
 
                 for (let i = 0; i < total; i++) {
                     const file = files[i];
-                    progressLabel.innerHTML = `<i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin text-amber-400"></i> Processing photo ${i+1} of ${total}...`;
+                    const isVid = (file.type && file.type.startsWith('video/')) || /\.(mp4|mov|webm|avi|m4v)$/i.test(file.name || '');
+
+                    progressLabel.innerHTML = `<i data-lucide="${isVid ? 'film' : 'loader-2'}" class="w-3.5 h-3.5 animate-spin text-amber-400"></i> Watermarking ${isVid ? 'Video' : 'Photo'} ${i+1} of ${total}...`;
                     lucide.createIcons();
 
                     try {
-                        const res = await processImageOnClient(file);
-                        const cleanName = `${currentBrand}_${file.name || `photo_${i+1}.jpg`}`;
+                        let res;
+                        if (isVid) {
+                            res = await processVideoOnClient(file, (p) => {
+                                const itemPct = Math.round(((i + p) / total) * 100);
+                                progressBar.style.width = itemPct + '%';
+                                progressPercent.textContent = itemPct + '%';
+                            });
+                        } else {
+                            res = await processImageOnClient(file);
+                        }
+
+                        const cleanExt = isVid ? (res.blob && res.blob.type && res.blob.type.includes('mp4') ? 'mp4' : 'webm') : 'jpg';
+                        const baseWithoutExt = (file.name || `media_${i+1}`).replace(/\.[^/.]+$/, '');
+                        const cleanName = `${currentBrand}_${baseWithoutExt}.${cleanExt}`;
+
                         currentBatchResults.push({
                             filename: cleanName,
                             url: res.blobUrl,
-                            blob: res.blob
+                            blob: res.blob,
+                            is_video: isVid
                         });
                     } catch (err) {
                         console.error('Batch item error:', err);
@@ -1001,7 +1143,7 @@
                     e.preventDefault();
                     downloadBatchZipClient();
                 };
-                showToast(`Batch completed: ${currentBatchResults.length} photos ready!`);
+                showToast(`Batch completed: ${currentBatchResults.length} file(s) ready!`);
             }
 
             setTimeout(() => progressBox.classList.add('hidden'), 800);
