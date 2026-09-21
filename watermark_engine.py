@@ -480,13 +480,37 @@ def precompute_watermark_for_video(
     return None
 
 
+def detect_star_peak_cv2(img_bgr, rx1=0.65, ry1=0.55, rx2=0.97, ry2=0.97):
+    """
+    Detects the exact location of a 4-pointed Gemini watermark star.
+    """
+    h, w = img_bgr.shape[:2]
+    x1, y1 = int(w * rx1), int(h * ry1)
+    x2, y2 = int(w * rx2), int(h * ry2)
+
+    roi = img_bgr[y1:y2, x1:x2]
+    if roi.size == 0:
+        return None
+
+    gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (15, 15))
+    tophat = cv2.morphologyEx(gray, cv2.MORPH_TOPHAT, kernel)
+
+    _, max_val, _, max_loc = cv2.minMaxLoc(tophat)
+    if max_val >= 35:
+        return (x1 + max_loc[0], y1 + max_loc[1])
+    return None
+
+
 def process_video(
     input_path,
     output_path,
     remove_gemini=True,
+    auto_detect_sparkles=True,
     corner="bottom_right",
     box_size_pct=0.09,
     margin_pct=0.035,
+    custom_spots=None,
     inpaint_radius=3,
     inpaint_method="telea",
     logo_path=None,
@@ -528,7 +552,7 @@ def process_video(
 
     os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
 
-    # Read first frame to sample luminance and initialize
+    # Read first frame to sample luminance and detect watermarks
     ret, first_frame = cap.read()
     if not ret or first_frame is None:
         cap.release()
@@ -537,27 +561,56 @@ def process_video(
     if raw_w != width or raw_h != height:
         first_frame = cv2.resize(first_frame, (width, height))
 
-    # Pre-create inpainting mask ONCE
+    # Pre-create inpainting mask ONCE for all video frames
     mask = None
-    if remove_gemini:
+    if remove_gemini or custom_spots:
         mask = np.zeros((height, width), dtype=np.uint8)
-        box_w = max(10, int(width * box_size_pct))
-        box_h = max(10, int(height * box_size_pct))
+        corner_norm = (corner or "").lower().replace("-", "_")
+
+        # 1. Detect exact Gemini star location on video frame
+        if auto_detect_sparkles or corner_norm == "auto":
+            star_loc = detect_star_peak_cv2(first_frame, 0.65, 0.55, 0.97, 0.97)
+            if star_loc:
+                star_r = max(16, int(min(width, height) * 0.045))
+                cv2.circle(mask, star_loc, star_r, 255, -1)
+
+        # 2. Add corner zones
+        box_w = max(15, int(width * box_size_pct))
+        box_h = max(15, int(height * box_size_pct))
         margin_x = int(width * margin_pct)
         margin_y = int(height * margin_pct)
 
-        if corner in ["bottom_right", "br"]:
-            x1, y1, x2, y2 = width - margin_x - box_w, height - margin_y - box_h, width - margin_x, height - margin_y
-        elif corner in ["bottom_left", "bl"]:
-            x1, y1, x2, y2 = margin_x, height - margin_y - box_h, margin_x + box_w, height - margin_y
-        elif corner in ["top_right", "tr"]:
-            x1, y1, x2, y2 = width - margin_x - box_w, margin_y, width - margin_x, margin_y + box_h
-        elif corner in ["top_left", "tl"]:
-            x1, y1, x2, y2 = margin_x, margin_y, margin_x + box_w, margin_y + box_h
-        else:
-            x1, y1, x2, y2 = width - margin_x - box_w, height - margin_y - box_h, width - margin_x, height - margin_y
+        if corner_norm in ["bottom_right", "br", "all_corners", "all", "auto"]:
+            mask[max(0, height - margin_y - box_h):min(height, height - margin_y), max(0, width - margin_x - box_w):min(width, width - margin_x)] = 255
+            # Also cover broader Gemini video watermark zone (x: 80%..95%, y: 76%..92%)
+            wm_x1, wm_y1 = int(width * 0.78), int(height * 0.74)
+            wm_x2, wm_y2 = int(width * 0.95), int(height * 0.92)
+            cv2.rectangle(mask, (wm_x1, wm_y1), (wm_x2, wm_y2), 255, -1)
+        if corner_norm in ["bottom_left", "bl", "all_corners", "all"]:
+            mask[max(0, height - margin_y - box_h):min(height, height - margin_y), max(0, margin_x):min(width, margin_x + box_w)] = 255
+        if corner_norm in ["top_right", "tr", "all_corners", "all"]:
+            mask[max(0, margin_y):min(height, margin_y + box_h), max(0, width - margin_x - box_w):min(width, width - margin_x)] = 255
+        if corner_norm in ["top_left", "tl", "all_corners", "all"]:
+            mask[max(0, margin_y):min(height, margin_y + box_h), max(0, margin_x):min(width, margin_x + box_w)] = 255
 
-        mask[max(0, y1):min(height, y2), max(0, x1):min(width, x2)] = 255
+        # 3. Add custom spots (e.g. upper sparkles or user clicked spots)
+        if custom_spots:
+            for spot in custom_spots:
+                if isinstance(spot, dict):
+                    sx = spot.get("x", 0)
+                    sy = spot.get("y", 0)
+                    sr = spot.get("r", 20)
+                elif isinstance(spot, (list, tuple)) and len(spot) >= 2:
+                    sx, sy = spot[0], spot[1]
+                    sr = spot[2] if len(spot) > 2 else 20
+                else:
+                    continue
+
+                px = int(sx * width) if sx <= 1.0 else int(sx)
+                py = int(sy * height) if sy <= 1.0 else int(sy)
+                pr = int(sr * min(width, height)) if sr <= 1.0 else int(sr)
+                cv2.circle(mask, (px, py), max(10, pr), 255, -1)
+
         kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
         mask = cv2.dilate(mask, kernel, iterations=1)
 
@@ -667,9 +720,11 @@ def process_image(
             input_path=input_path,
             output_path=output_path,
             remove_gemini=remove_gemini,
+            auto_detect_sparkles=auto_detect_sparkles,
             corner=corner,
             box_size_pct=box_size_pct,
             margin_pct=margin_pct,
+            custom_spots=custom_spots,
             inpaint_radius=inpaint_radius,
             inpaint_method=inpaint_method,
             logo_path=logo_path,

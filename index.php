@@ -464,7 +464,7 @@
                     <i data-lucide="crosshair" class="w-3.5 h-3.5"></i> Click anywhere to erase sparkles / watermarks
                 </div>
                 <img id="previewModalImg" src="" onclick="handlePreviewImageClick(event)" class="max-h-[75vh] w-auto object-contain rounded-xl shadow-lg cursor-crosshair border border-slate-800" alt="Full Preview" title="Click anywhere to remove an upper sparkle or watermark">
-                <video id="previewModalVid" src="" class="hidden max-h-[75vh] w-auto object-contain rounded-xl shadow-lg" controls autoplay loop></video>
+                <video id="previewModalVid" src="" onclick="handlePreviewVideoClick(event)" class="hidden max-h-[75vh] w-auto object-contain rounded-xl shadow-lg cursor-crosshair border border-slate-800" controls autoplay loop title="Click anywhere to remove a sparkle or watermark from this video"></video>
             </div>
         </div>
     </div>
@@ -798,6 +798,21 @@
             }, 400);
         }
 
+        function handlePreviewVideoClick(event) {
+            const vid = document.getElementById('previewModalVid');
+            if (!vid || !vid.videoWidth) return;
+
+            const rect = vid.getBoundingClientRect();
+            const clickX = event.clientX - rect.left;
+            const clickY = event.clientY - rect.top;
+
+            const xPct = clickX / rect.width;
+            const yPct = clickY / rect.height;
+
+            addCustomSpot(xPct, yPct, 24);
+            showToast(`Erase spot added at ${(xPct*100).toFixed(1)}%, ${(yPct*100).toFixed(1)}%! Re-processing video...`);
+        }
+
         // ==================== IN-BROWSER HTML5 CANVAS ENGINE ====================
         function getPreloadedLogo(logoPath) {
             return new Promise((resolve) => {
@@ -816,6 +831,56 @@
                 };
                 img.src = logoPath;
             });
+        }
+
+        // Scans the canvas ROI for the 4-pointed Gemini star peak
+        function detectStarSparkleInCanvas(ctx, width, height, rx1 = 0.65, ry1 = 0.50, rx2 = 0.97, ry2 = 0.97) {
+            const x1 = Math.round(width * rx1);
+            const y1 = Math.round(height * ry1);
+            const x2 = Math.round(width * rx2);
+            const y2 = Math.round(height * ry2);
+            const rw = x2 - x1;
+            const rh = y2 - y1;
+
+            if (rw <= 15 || rh <= 15) return null;
+
+            try {
+                const imgData = ctx.getImageData(x1, y1, rw, rh);
+                const d = imgData.data;
+                let maxContrast = 0;
+                let bestX = -1, bestY = -1;
+
+                for (let y = 8; y < rh - 8; y += 2) {
+                    for (let x = 8; x < rw - 8; x += 2) {
+                        const idx = (y * rw + x) * 4;
+                        const lum = 0.299 * d[idx] + 0.587 * d[idx + 1] + 0.114 * d[idx + 2];
+                        if (lum > 165) {
+                            let bgLum = 0;
+                            let count = 0;
+                            const offsets = [-8, 8];
+                            for (let dy of offsets) {
+                                for (let dx of offsets) {
+                                    const nIdx = ((y + dy) * rw + (x + dx)) * 4;
+                                    bgLum += 0.299 * d[nIdx] + 0.587 * d[nIdx + 1] + 0.114 * d[nIdx + 2];
+                                    count++;
+                                }
+                            }
+                            const localBg = bgLum / count;
+                            const contrast = lum - localBg;
+                            if (contrast > maxContrast) {
+                                maxContrast = contrast;
+                                bestX = x1 + x;
+                                bestY = y1 + y;
+                            }
+                        }
+                    }
+                }
+
+                if (maxContrast >= 28 && bestX > 0) {
+                    return { x: bestX, y: bestY, contrast: maxContrast };
+                }
+            } catch (e) {}
+            return null;
         }
 
         // High-Precision Harmonic Boundary Inpainter (Eliminates all dark circles / color smudges!)
@@ -897,13 +962,26 @@
 
         // Clean Gemini corner watermarks + upper sparkles + custom erase spots without any dark artifacts
         function removeGeminiWatermarkCanvas(ctx, width, height, corner = 'auto', customSpots = [], autoDetect = true) {
-            const boxRadius = Math.max(16, Math.round(Math.min(width, height) * 0.038));
+            const boxRadius = Math.max(16, Math.round(Math.min(width, height) * 0.042));
             const margin = Math.max(8, Math.round(Math.min(width, height) * 0.030));
             const cornerNorm = (corner || '').toLowerCase().replace('-', '_');
 
-            // 1. Inpaint Corner watermarks using harmonic perimeter boundary fill
+            // 1. Auto-detect star sparkle in bottom-right area (and in video frames)
+            if (autoDetect || cornerNorm === 'auto' || cornerNorm === 'bottom_right' || cornerNorm === 'br') {
+                const star = detectStarSparkleInCanvas(ctx, width, height, 0.65, 0.50, 0.97, 0.97);
+                if (star) {
+                    const starR = Math.max(16, Math.round(Math.min(width, height) * 0.040));
+                    inpaintSpotCanvas(ctx, star.x, star.y, starR, width, height);
+                }
+            }
+
+            // 2. Inpaint Corner watermarks using harmonic perimeter boundary fill
             if (cornerNorm === 'bottom_right' || cornerNorm === 'br' || cornerNorm === 'all_corners' || cornerNorm === 'auto') {
                 inpaintSpotCanvas(ctx, width - margin - boxRadius, height - margin - boxRadius, boxRadius, width, height);
+                // Also cover slightly inset Gemini position
+                const insetX = width - Math.round(width * 0.12);
+                const insetY = height - Math.round(height * 0.12);
+                inpaintSpotCanvas(ctx, insetX, insetY, boxRadius, width, height);
             }
             if (cornerNorm === 'bottom_left' || cornerNorm === 'bl' || cornerNorm === 'all_corners') {
                 inpaintSpotCanvas(ctx, margin + boxRadius, height - margin - boxRadius, boxRadius, width, height);
@@ -915,12 +993,12 @@
                 inpaintSpotCanvas(ctx, margin + boxRadius, margin + boxRadius, boxRadius, width, height);
             }
 
-            // 2. Inpaint all user clicked/custom spots (e.g. Upper Diamond Sparkle)
+            // 3. Inpaint all user clicked/custom spots (e.g. Upper Diamond Sparkle)
             if (customSpots && customSpots.length > 0) {
                 customSpots.forEach(spot => {
                     const sx = spot.x <= 1.0 ? Math.round(spot.x * width) : Math.round(spot.x);
                     const sy = spot.y <= 1.0 ? Math.round(spot.y * height) : Math.round(spot.y);
-                    const sr = Math.max(10, spot.r || Math.round(Math.min(width, height) * 0.018));
+                    const sr = Math.max(10, spot.r || Math.round(Math.min(width, height) * 0.025));
                     inpaintSpotCanvas(ctx, sx, sy, sr, width, height);
                 });
             }
