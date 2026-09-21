@@ -988,7 +988,7 @@
                     const meanG = samples > 0 ? sumG / samples : 128;
                     const meanB = samples > 0 ? sumB / samples : 128;
                     const avgLum = 0.2126 * meanR + 0.7152 * meanG + 0.0722 * meanB;
-                    const isSkinTone = (meanR > 115 and meanG > 75 and meanR > meanB + 10 and avgLum < 195);
+                    const isSkinTone = (meanR > 115 && meanG > 75 && meanR > meanB + 10 && avgLum < 195);
 
                     // On dark backgrounds OR human skin tones -> Crisp White logo provides 100% crystal clear legibility
                     // On pure white/light studio lightbox -> Brand Gold/Color logo provides maximum luxury contrast
