@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Gemini Watermark Cleaner & Brand Studio - Shreeja & Velmora</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -857,12 +860,13 @@
                         const lum = 0.299 * d[idx] + 0.587 * d[idx + 1] + 0.114 * d[idx + 2];
 
                         // Detect bright and translucent sparkles on any background
-                        if (lum > 75) {
+                        if (lum > 65) {
                             let bgSum = 0, bgCount = 0;
                             const ringOffsets = [
-                                [-7, -7], [0, -8], [7, -7],
-                                [-8, 0],           [8, 0],
-                                [-7, 7],  [0, 8],  [7, 7]
+                                [-8, -8], [0, -9], [8, -8],
+                                [-9, 0],           [9, 0],
+                                [-8, 8],  [0, 9],  [8, 8],
+                                [-6, -6], [6, -6], [-6, 6], [6, 6]
                             ];
                             for (let i = 0; i < ringOffsets.length; i++) {
                                 const nx = x + ringOffsets[i][0];
@@ -876,7 +880,7 @@
                             const localBg = bgCount > 0 ? bgSum / bgCount : lum;
                             const contrast = lum - localBg;
 
-                            if (contrast >= 10) {
+                            if (contrast >= 8) {
                                 candidates.push({ x: x1 + x, y: y1 + y, contrast: contrast });
                             }
                         }
