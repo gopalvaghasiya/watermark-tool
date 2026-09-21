@@ -1266,10 +1266,10 @@
                             inpaintSpots.push({ x: margin + boxRadius, y: height - margin - boxRadius, r: boxRadius });
                         }
                         if (cornerNorm === 'top_right' || cornerNorm === 'tr' || cornerNorm === 'all_corners') {
-                            inpaintSpots.push({ x: width - margin - boxRadius, margin + boxRadius, r: boxRadius });
+                            inpaintSpots.push({ x: width - margin - boxRadius, y: margin + boxRadius, r: boxRadius });
                         }
                         if (cornerNorm === 'top_left' || cornerNorm === 'tl' || cornerNorm === 'all_corners') {
-                            inpaintSpots.push({ x: margin + boxRadius, margin + boxRadius, r: boxRadius });
+                            inpaintSpots.push({ x: margin + boxRadius, y: margin + boxRadius, r: boxRadius });
                         }
                     }
 
