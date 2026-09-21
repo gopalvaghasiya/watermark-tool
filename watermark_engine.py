@@ -178,45 +178,57 @@ def remove_gemini_watermark_cv2(
             cv2.circle(mask, (px, py), max(8, pr), 255, -1)
 
     corner_norm = (corner or "").lower().replace("-", "_")
-    box_w = max(20, int(w * box_size_pct))
-    box_h = max(20, int(h * box_size_pct))
+    box_w = max(14, int(w * box_size_pct))
+    box_h = max(14, int(h * box_size_pct))
     margin_x = int(w * margin_pct)
     margin_y = int(h * margin_pct)
+    r_corner = max(box_w, box_h) // 2
 
-    if corner_norm in ["bottom_right", "br", "all_corners", "all", "auto"]:
-        mask[max(0, h - margin_y - box_h):min(h, h - margin_y), max(0, w - margin_x - box_w):min(w, w - margin_x)] = 255
-    if corner_norm in ["bottom_left", "bl", "all_corners", "all"]:
-        mask[max(0, h - margin_y - box_h):min(h, h - margin_y), max(0, margin_x):min(w, margin_x + box_w)] = 255
-    if corner_norm in ["top_right", "tr", "all_corners", "all"]:
-        mask[max(0, margin_y):min(h, margin_y + box_h), max(0, w - margin_x - box_w):min(w, w - margin_x)] = 255
-    if corner_norm in ["top_left", "tl", "all_corners", "all"]:
-        mask[max(0, margin_y):min(h, margin_y + box_h), max(0, margin_x):min(w, margin_x + box_w)] = 255
-
-    # Full-image Astroid Sparkle auto-detection
-    if auto_detect_sparkles or corner_norm == "auto":
+    # Multi-star sparkle auto-detection (Detects all primary and secondary Gemini AI sparkles)
+    stars_detected = []
+    if auto_detect_sparkles or corner_norm == "auto" or corner_norm in ["bottom_right", "br"]:
         try:
             gray = cv2.cvtColor(img_cv2, cv2.COLOR_BGR2GRAY)
             kernel_th = cv2.getStructuringElement(cv2.MORPH_RECT, (15, 15))
             tophat = cv2.morphologyEx(gray, cv2.MORPH_TOPHAT, kernel_th)
-            tophat_f = tophat.astype(np.float32) / 255.0
 
-            scales = [int(min(w, h) * s) for s in [0.035, 0.05, 0.07]]
-            scales = [s for s in scales if s >= 16]
+            # Search in the bottom-right and bottom-half region
+            y_start = int(h * 0.45)
+            x_start = int(w * 0.45)
+            roi_tophat = tophat[y_start:h, x_start:w]
+            rh, rw = roi_tophat.shape
 
-            detected_stars = []
-            for s in scales:
-                tpl = generate_astroid_template(s)
-                res = cv2.matchTemplate(tophat_f, tpl, cv2.TM_CCOEFF_NORMED)
-                locs = np.where(res >= 0.85)
-                for pt in zip(*locs[::-1]):
-                    cx = pt[0] + s // 2
-                    cy = pt[1] + s // 2
-                    detected_stars.append((cx, cy, s))
+            peaks = []
+            for y in range(4, rh - 4, 2):
+                for x in range(4, rw - 4, 2):
+                    val = int(roi_tophat[y, x])
+                    if val >= 13:
+                        patch = roi_tophat[max(0, y-2):min(rh, y+3), max(0, x-2):min(rw, x+3)]
+                        if val == int(patch.max()):
+                            peaks.append((val, x_start + x, y_start + y))
 
-            for cx, cy, s in detected_stars:
-                cv2.circle(mask, (cx, cy), max(10, int(s * 0.55)), 255, -1)
+            peaks.sort(key=lambda p: p[0], reverse=True)
+            min_dist_sq = 14 * 14
+            for val, px, py in peaks:
+                if not any((px - fx)**2 + (py - fy)**2 < min_dist_sq for _, fx, fy in stars_detected):
+                    star_r = max(14, int(min(w, h) * 0.035))
+                    stars_detected.append((val, px, py))
+                    cv2.circle(mask, (px, py), star_r, 255, -1)
+                    if len(stars_detected) >= 8:
+                        break
         except Exception as e:
             print(f"Warning in sparkle auto-detection: {e}", file=sys.stderr)
+
+    # Fallback to corner inpainting if no sparkles were found or corner was explicitly specified
+    if len(stars_detected) == 0:
+        if corner_norm in ["bottom_right", "br", "all_corners", "all", "auto"]:
+            cv2.circle(mask, (w - margin_x - r_corner, h - margin_y - r_corner), r_corner, 255, -1)
+    if corner_norm in ["bottom_left", "bl", "all_corners", "all"]:
+        cv2.circle(mask, (margin_x + r_corner, h - margin_y - r_corner), r_corner, 255, -1)
+    if corner_norm in ["top_right", "tr", "all_corners", "all"]:
+        cv2.circle(mask, (w - margin_x - r_corner, margin_y + r_corner), r_corner, 255, -1)
+    if corner_norm in ["top_left", "tl", "all_corners", "all"]:
+        cv2.circle(mask, (margin_x + r_corner, margin_y + r_corner), r_corner, 255, -1)
 
     if cv2.countNonZero(mask) == 0:
         return img_cv2
@@ -480,9 +492,10 @@ def precompute_watermark_for_video(
     return None
 
 
-def detect_star_peak_cv2(img_bgr, rx1=0.65, ry1=0.55, rx2=0.97, ry2=0.97):
+def detect_gemini_stars_cv2(img_bgr, rx1=0.45, ry1=0.45, rx2=0.98, ry2=0.98, min_contrast=13):
     """
-    Detects the exact location of a 4-pointed Gemini watermark star.
+    Detects all 4-pointed Gemini watermark stars (both primary and satellite sparkles)
+    using morphological top-hat filtering and non-maximum suppression.
     """
     h, w = img_bgr.shape[:2]
     x1, y1 = int(w * rx1), int(h * ry1)
@@ -490,16 +503,33 @@ def detect_star_peak_cv2(img_bgr, rx1=0.65, ry1=0.55, rx2=0.97, ry2=0.97):
 
     roi = img_bgr[y1:y2, x1:x2]
     if roi.size == 0:
-        return None
+        return []
 
     gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (15, 15))
     tophat = cv2.morphologyEx(gray, cv2.MORPH_TOPHAT, kernel)
 
-    _, max_val, _, max_loc = cv2.minMaxLoc(tophat)
-    if max_val >= 35:
-        return (x1 + max_loc[0], y1 + max_loc[1])
-    return None
+    rh, rw = tophat.shape
+    peaks = []
+    for y in range(4, rh - 4, 2):
+        for x in range(4, rw - 4, 2):
+            val = int(tophat[y, x])
+            if val >= min_contrast:
+                patch = tophat[max(0, y-2):min(rh, y+3), max(0, x-2):min(rw, x+3)]
+                if val == int(patch.max()):
+                    peaks.append((val, x1 + x, y1 + y))
+
+    peaks.sort(key=lambda p: p[0], reverse=True)
+    filtered = []
+    min_dist_sq = 14 * 14
+    for val, px, py in peaks:
+        if not any((px - fx)**2 + (py - fy)**2 < min_dist_sq for _, fx, fy in filtered):
+            star_r = max(14, int(min(w, h) * 0.035))
+            filtered.append((val, px, py, star_r))
+            if len(filtered) >= 8:
+                break
+
+    return [(px, py, sr) for _, px, py, sr in filtered]
 
 
 def process_video(
@@ -567,16 +597,15 @@ def process_video(
         mask = np.zeros((height, width), dtype=np.uint8)
         corner_norm = (corner or "").lower().replace("-", "_")
 
-        # 1. Detect exact Gemini star location on video frame
-        star_loc = None
+        # 1. Detect exact Gemini star locations on video frame
+        detected_stars = []
         if auto_detect_sparkles or corner_norm == "auto":
-            star_loc = detect_star_peak_cv2(first_frame, 0.60, 0.45, 0.98, 0.98)
-            if star_loc:
-                star_r = max(14, int(min(width, height) * 0.038))
-                cv2.circle(mask, star_loc, star_r, 255, -1)
+            detected_stars = detect_gemini_stars_cv2(first_frame, 0.45, 0.45, 0.98, 0.98)
+            for (sx, sy, sr) in detected_stars:
+                cv2.circle(mask, (sx, sy), sr, 255, -1)
 
-        # 2. Add corner zone only if star wasn't detected or corner explicitly chosen
-        if not star_loc:
+        # 2. Add corner zone only if stars weren't detected or corner explicitly chosen
+        if len(detected_stars) == 0:
             box_w = max(14, int(width * box_size_pct))
             box_h = max(14, int(height * box_size_pct))
             margin_x = int(width * margin_pct)

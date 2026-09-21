@@ -833,54 +833,69 @@
             });
         }
 
-        // Scans the canvas ROI for the 4-pointed Gemini star peak
-        function detectStarSparkleInCanvas(ctx, width, height, rx1 = 0.65, ry1 = 0.50, rx2 = 0.97, ry2 = 0.97) {
-            const x1 = Math.round(width * rx1);
-            const y1 = Math.round(height * ry1);
-            const x2 = Math.round(width * rx2);
-            const y2 = Math.round(height * ry2);
+        // Multi-Star Gemini Sparkle Detector: Scans the target region for all 4-pointed Gemini star sparkles
+        function detectGeminiStarsInCanvas(ctx, width, height, rx1 = 0.45, ry1 = 0.45, rx2 = 0.98, ry2 = 0.98) {
+            const x1 = Math.max(0, Math.round(width * rx1));
+            const y1 = Math.max(0, Math.round(height * ry1));
+            const x2 = Math.min(width, Math.round(width * rx2));
+            const y2 = Math.min(height, Math.round(height * ry2));
             const rw = x2 - x1;
             const rh = y2 - y1;
 
-            if (rw <= 15 || rh <= 15) return null;
+            if (rw <= 15 || rh <= 15) return [];
 
+            const detected = [];
             try {
                 const imgData = ctx.getImageData(x1, y1, rw, rh);
                 const d = imgData.data;
-                let maxContrast = 0;
-                let bestX = -1, bestY = -1;
+                const candidates = [];
+                const step = 2;
 
-                for (let y = 8; y < rh - 8; y += 2) {
-                    for (let x = 8; x < rw - 8; x += 2) {
+                for (let y = 6; y < rh - 6; y += step) {
+                    for (let x = 6; x < rw - 6; x += step) {
                         const idx = (y * rw + x) * 4;
                         const lum = 0.299 * d[idx] + 0.587 * d[idx + 1] + 0.114 * d[idx + 2];
-                        if (lum > 165) {
-                            let bgLum = 0;
-                            let count = 0;
-                            const offsets = [-8, 8];
-                            for (let dy of offsets) {
-                                for (let dx of offsets) {
-                                    const nIdx = ((y + dy) * rw + (x + dx)) * 4;
-                                    bgLum += 0.299 * d[nIdx] + 0.587 * d[nIdx + 1] + 0.114 * d[nIdx + 2];
-                                    count++;
+
+                        // Detect bright and translucent sparkles on any background
+                        if (lum > 90) {
+                            let bgSum = 0, bgCount = 0;
+                            const ringOffsets = [
+                                [-7, -7], [0, -8], [7, -7],
+                                [-8, 0],           [8, 0],
+                                [-7, 7],  [0, 8],  [7, 7]
+                            ];
+                            for (let i = 0; i < ringOffsets.length; i++) {
+                                const nx = x + ringOffsets[i][0];
+                                const ny = y + ringOffsets[i][1];
+                                if (nx >= 0 && nx < rw && ny >= 0 && ny < rh) {
+                                    const nIdx = (ny * rw + nx) * 4;
+                                    bgSum += 0.299 * d[nIdx] + 0.587 * d[nIdx + 1] + 0.114 * d[nIdx + 2];
+                                    bgCount++;
                                 }
                             }
-                            const localBg = bgLum / count;
+                            const localBg = bgCount > 0 ? bgSum / bgCount : lum;
                             const contrast = lum - localBg;
-                            if (contrast > maxContrast) {
-                                maxContrast = contrast;
-                                bestX = x1 + x;
-                                bestY = y1 + y;
+
+                            if (contrast >= 13) {
+                                candidates.push({ x: x1 + x, y: y1 + y, contrast: contrast });
                             }
                         }
                     }
                 }
 
-                if (maxContrast >= 28 && bestX > 0) {
-                    return { x: bestX, y: bestY, contrast: maxContrast };
+                candidates.sort((a, b) => b.contrast - a.contrast);
+
+                const baseR = Math.max(14, Math.round(Math.min(width, height) * 0.035));
+                for (let i = 0; i < candidates.length; i++) {
+                    const c = candidates[i];
+                    const tooClose = detected.some(d => Math.hypot(d.x - c.x, d.y - c.y) < 14);
+                    if (!tooClose) {
+                        detected.push({ x: c.x, y: c.y, r: baseR, contrast: c.contrast });
+                        if (detected.length >= 8) break;
+                    }
                 }
             } catch (e) {}
-            return null;
+            return detected;
         }
 
         // High-Precision Harmonic Boundary Inpainter (Eliminates all dark circles / color smudges!)
@@ -960,28 +975,27 @@
             ctx.putImageData(imgData, x1, y1);
         }
 
-        // Clean Gemini corner watermarks + upper sparkles + custom erase spots without any dark artifacts
+        // Clean Gemini corner watermarks + multi-sparkles + custom erase spots seamlessly
         function removeGeminiWatermarkCanvas(ctx, width, height, corner = 'auto', customSpots = [], autoDetect = true) {
             const boxRadius = Math.max(14, Math.round(Math.min(width, height) * 0.038));
             const margin = Math.max(8, Math.round(Math.min(width, height) * 0.025));
             const cornerNorm = (corner || '').toLowerCase().replace('-', '_');
 
-            let starDetected = false;
-            // 1. Auto-detect star sparkle in bottom-right area (and in video frames)
+            let starsFound = 0;
+            // 1. Auto-detect all Gemini star sparkles (primary & secondary stars)
             if (autoDetect || cornerNorm === 'auto' || cornerNorm === 'bottom_right' || cornerNorm === 'br') {
-                const star = detectStarSparkleInCanvas(ctx, width, height, 0.60, 0.45, 0.98, 0.98);
-                if (star) {
-                    starDetected = true;
-                    const starR = Math.max(14, Math.round(Math.min(width, height) * 0.038));
-                    inpaintSpotCanvas(ctx, star.x, star.y, starR, width, height);
+                const stars = detectGeminiStarsInCanvas(ctx, width, height, 0.45, 0.45, 0.98, 0.98);
+                if (stars && stars.length > 0) {
+                    stars.forEach(star => {
+                        inpaintSpotCanvas(ctx, star.x, star.y, star.r, width, height);
+                        starsFound++;
+                    });
                 }
             }
 
-            // 2. Inpaint Corner watermarks only if star not detected or explicitly requested
-            if (!starDetected) {
-                if (cornerNorm === 'bottom_right' || cornerNorm === 'br' || cornerNorm === 'all_corners' || cornerNorm === 'auto') {
-                    inpaintSpotCanvas(ctx, width - margin - boxRadius, height - margin - boxRadius, boxRadius, width, height);
-                }
+            // 2. Fallback Corner inpaint if no stars detected or explicitly requested
+            if (starsFound === 0 && (cornerNorm === 'bottom_right' || cornerNorm === 'br' || cornerNorm === 'all_corners' || cornerNorm === 'auto')) {
+                inpaintSpotCanvas(ctx, width - margin - boxRadius, height - margin - boxRadius, boxRadius, width, height);
             }
             if (cornerNorm === 'bottom_left' || cornerNorm === 'bl' || cornerNorm === 'all_corners') {
                 inpaintSpotCanvas(ctx, margin + boxRadius, height - margin - boxRadius, boxRadius, width, height);
@@ -1234,16 +1248,16 @@
                         const margin = Math.max(8, Math.round(Math.min(width, height) * 0.025));
                         const cornerNorm = (corner || '').toLowerCase().replace('-', '_');
 
-                        let starDetected = false;
+                        let starsFound = 0;
                         if (autoDetect || cornerNorm === 'auto' || cornerNorm === 'bottom_right' || cornerNorm === 'br') {
-                            const star = detectStarSparkleInCanvas(ctx, width, height, 0.60, 0.45, 0.98, 0.98);
-                            if (star) {
-                                starDetected = true;
-                                inpaintSpots.push({ x: star.x, y: star.y, r: boxRadius });
+                            const stars = detectGeminiStarsInCanvas(ctx, width, height, 0.45, 0.45, 0.98, 0.98);
+                            if (stars && stars.length > 0) {
+                                stars.forEach(s => inpaintSpots.push(s));
+                                starsFound = stars.length;
                             }
                         }
 
-                        if (!starDetected) {
+                        if (starsFound === 0) {
                             if (cornerNorm === 'bottom_right' || cornerNorm === 'br' || cornerNorm === 'all_corners' || cornerNorm === 'auto') {
                                 inpaintSpots.push({ x: width - margin - boxRadius, y: height - margin - boxRadius, r: boxRadius });
                             }
@@ -1252,10 +1266,10 @@
                             inpaintSpots.push({ x: margin + boxRadius, y: height - margin - boxRadius, r: boxRadius });
                         }
                         if (cornerNorm === 'top_right' || cornerNorm === 'tr' || cornerNorm === 'all_corners') {
-                            inpaintSpots.push({ x: width - margin - boxRadius, y: margin + boxRadius, r: boxRadius });
+                            inpaintSpots.push({ x: width - margin - boxRadius, margin + boxRadius, r: boxRadius });
                         }
                         if (cornerNorm === 'top_left' || cornerNorm === 'tl' || cornerNorm === 'all_corners') {
-                            inpaintSpots.push({ x: margin + boxRadius, y: margin + boxRadius, r: boxRadius });
+                            inpaintSpots.push({ x: margin + boxRadius, margin + boxRadius, r: boxRadius });
                         }
                     }
 
