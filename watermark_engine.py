@@ -90,6 +90,25 @@ def make_logo_transparent(img_pil, bg_mode="auto", color_override="original"):
     return Image.fromarray(arr.astype(np.uint8))
 
 
+def generate_astroid_template(size=31):
+    """
+    Generates a 4-pointed astroid star kernel (Gemini logo geometry).
+    """
+    kernel = np.zeros((size, size), dtype=np.float32)
+    center = (size - 1) / 2.0
+    radius = center
+    for y in range(size):
+        for x in range(size):
+            nx = abs(x - center) / max(1.0, radius)
+            ny = abs(y - center) / max(1.0, radius)
+            val = (nx ** (2/3) + ny ** (2/3))
+            if val <= 1.0:
+                kernel[y, x] = (1.0 - val) ** 0.5
+    if kernel.max() > 0:
+        kernel /= kernel.max()
+    return kernel
+
+
 def remove_gemini_watermark_cv2(
     img_cv2,
     corner="bottom_right",
@@ -98,10 +117,13 @@ def remove_gemini_watermark_cv2(
     inpaint_radius=3,
     method="telea",
     custom_boxes=None,
-    mask_image_path=None
+    custom_spots=None,
+    mask_image_path=None,
+    auto_detect_sparkles=True
 ):
     """
     Removes Gemini / AI watermarks using OpenCV inpainting while preserving image sharpness.
+    Supports auto-detecting full-image sparkles, all 4 corners, custom boxes, and spot eraser points.
     """
     h, w = img_cv2.shape[:2]
     mask = np.zeros((h, w), dtype=np.uint8)
@@ -116,7 +138,16 @@ def remove_gemini_watermark_cv2(
 
     if custom_boxes:
         for box in custom_boxes:
-            bx, by, bw, bh = box
+            if isinstance(box, dict):
+                bx = box.get("x", 0)
+                by = box.get("y", 0)
+                bw = box.get("w", box.get("width", 0.08))
+                bh = box.get("h", box.get("height", 0.08))
+            elif isinstance(box, (list, tuple)) and len(box) >= 4:
+                bx, by, bw, bh = box[:4]
+            else:
+                continue
+
             if bw <= 1.0 and bh <= 1.0 and bx <= 1.0 and by <= 1.0:
                 px = max(0, int(bx * w))
                 py = max(0, int(by * h))
@@ -129,36 +160,63 @@ def remove_gemini_watermark_cv2(
                 ph = min(h - py, int(bh))
             mask[py:py+ph, px:px+pw] = 255
 
-    if corner and corner != "none":
-        box_w = max(20, int(w * box_size_pct))
-        box_h = max(20, int(h * box_size_pct))
-        margin_x = int(w * margin_pct)
-        margin_y = int(h * margin_pct)
+    if custom_spots:
+        for spot in custom_spots:
+            if isinstance(spot, dict):
+                sx = spot.get("x", 0)
+                sy = spot.get("y", 0)
+                sr = spot.get("r", spot.get("radius", 18))
+            elif isinstance(spot, (list, tuple)) and len(spot) >= 2:
+                sx, sy = spot[0], spot[1]
+                sr = spot[2] if len(spot) > 2 else 18
+            else:
+                continue
 
-        if corner in ["bottom_right", "br"]:
-            x1 = max(0, w - margin_x - box_w)
-            y1 = max(0, h - margin_y - box_h)
-            x2 = min(w, w - margin_x)
-            y2 = min(h, h - margin_y)
-        elif corner in ["bottom_left", "bl"]:
-            x1 = max(0, margin_x)
-            y1 = max(0, h - margin_y - box_h)
-            x2 = min(w, margin_x + box_w)
-            y2 = min(h, h - margin_y)
-        elif corner in ["top_right", "tr"]:
-            x1 = max(0, w - margin_x - box_w)
-            y1 = max(0, margin_y)
-            x2 = min(w, w - margin_x)
-            y2 = min(h, margin_y + box_h)
-        elif corner in ["top_left", "tl"]:
-            x1 = max(0, margin_x)
-            y1 = max(0, margin_y)
-            x2 = min(w, margin_x + box_w)
-            y2 = min(h, margin_y + box_h)
-        else:
-            x1, y1, x2, y2 = w - margin_x - box_w, h - margin_y - box_h, w - margin_x, h - margin_y
+            px = int(sx * w) if sx <= 1.0 else int(sx)
+            py = int(sy * h) if sy <= 1.0 else int(sy)
+            pr = int(sr * min(w, h)) if sr <= 1.0 else int(sr)
+            cv2.circle(mask, (px, py), max(8, pr), 255, -1)
 
-        mask[y1:y2, x1:x2] = 255
+    corner_norm = (corner or "").lower().replace("-", "_")
+    box_w = max(20, int(w * box_size_pct))
+    box_h = max(20, int(h * box_size_pct))
+    margin_x = int(w * margin_pct)
+    margin_y = int(h * margin_pct)
+
+    if corner_norm in ["bottom_right", "br", "all_corners", "all", "auto"]:
+        mask[max(0, h - margin_y - box_h):min(h, h - margin_y), max(0, w - margin_x - box_w):min(w, w - margin_x)] = 255
+    if corner_norm in ["bottom_left", "bl", "all_corners", "all"]:
+        mask[max(0, h - margin_y - box_h):min(h, h - margin_y), max(0, margin_x):min(w, margin_x + box_w)] = 255
+    if corner_norm in ["top_right", "tr", "all_corners", "all"]:
+        mask[max(0, margin_y):min(h, margin_y + box_h), max(0, w - margin_x - box_w):min(w, w - margin_x)] = 255
+    if corner_norm in ["top_left", "tl", "all_corners", "all"]:
+        mask[max(0, margin_y):min(h, margin_y + box_h), max(0, margin_x):min(w, margin_x + box_w)] = 255
+
+    # Full-image Astroid Sparkle auto-detection
+    if auto_detect_sparkles or corner_norm == "auto":
+        try:
+            gray = cv2.cvtColor(img_cv2, cv2.COLOR_BGR2GRAY)
+            kernel_th = cv2.getStructuringElement(cv2.MORPH_RECT, (15, 15))
+            tophat = cv2.morphologyEx(gray, cv2.MORPH_TOPHAT, kernel_th)
+            tophat_f = tophat.astype(np.float32) / 255.0
+
+            scales = [int(min(w, h) * s) for s in [0.035, 0.05, 0.07]]
+            scales = [s for s in scales if s >= 16]
+
+            detected_stars = []
+            for s in scales:
+                tpl = generate_astroid_template(s)
+                res = cv2.matchTemplate(tophat_f, tpl, cv2.TM_CCOEFF_NORMED)
+                locs = np.where(res >= 0.85)
+                for pt in zip(*locs[::-1]):
+                    cx = pt[0] + s // 2
+                    cy = pt[1] + s // 2
+                    detected_stars.append((cx, cy, s))
+
+            for cx, cy, s in detected_stars:
+                cv2.circle(mask, (cx, cy), max(10, int(s * 0.55)), 255, -1)
+        except Exception as e:
+            print(f"Warning in sparkle auto-detection: {e}", file=sys.stderr)
 
     if cv2.countNonZero(mask) == 0:
         return img_cv2
@@ -582,7 +640,9 @@ def process_image(
     inpaint_radius=3,
     inpaint_method="telea",
     custom_boxes=None,
+    custom_spots=None,
     mask_path=None,
+    auto_detect_sparkles=True,
     logo_path=None,
     logo_pos="center_left",
     logo_scale=0.28,
@@ -626,7 +686,7 @@ def process_image(
         raise ValueError(f"Unable to read image with OpenCV: {input_path}")
 
     # Remove Gemini watermark
-    if remove_gemini or custom_boxes or mask_path:
+    if remove_gemini or custom_boxes or custom_spots or mask_path:
         img_cleaned_cv2 = remove_gemini_watermark_cv2(
             img_cv2=img_cv2,
             corner=corner if remove_gemini else "none",
@@ -635,7 +695,9 @@ def process_image(
             inpaint_radius=inpaint_radius,
             method=inpaint_method,
             custom_boxes=custom_boxes,
-            mask_image_path=mask_path
+            custom_spots=custom_spots,
+            mask_image_path=mask_path,
+            auto_detect_sparkles=auto_detect_sparkles
         )
     else:
         img_cleaned_cv2 = img_cv2
@@ -685,12 +747,15 @@ def main():
     
     parser.add_argument("--remove-gemini", action="store_true", default=True, help="Remove Gemini watermark")
     parser.add_argument("--no-remove-gemini", dest="remove_gemini", action="store_false", help="Do not remove Gemini watermark")
-    parser.add_argument("--corner", default="bottom_right", choices=["bottom_right", "bottom_left", "top_right", "top_left", "none"])
+    parser.add_argument("--auto-detect-sparkles", action="store_true", default=True, help="Auto-detect Gemini 4-pointed stars anywhere across the image")
+    parser.add_argument("--no-auto-detect-sparkles", dest="auto_detect_sparkles", action="store_false")
+    parser.add_argument("--corner", default="bottom_right", choices=["bottom_right", "bottom_left", "top_right", "top_left", "all_corners", "auto", "none"])
     parser.add_argument("--box-size", type=float, default=0.09)
     parser.add_argument("--margin", type=float, default=0.035)
     parser.add_argument("--inpaint-radius", type=int, default=3)
     parser.add_argument("--method", default="telea", choices=["telea", "ns"])
     parser.add_argument("--boxes-json", default=None)
+    parser.add_argument("--spots-json", default=None)
     parser.add_argument("--mask", default=None)
 
     parser.add_argument("--logo", default=None)
@@ -712,6 +777,13 @@ def main():
         except Exception as e:
             print(f"Warning: Failed to parse boxes JSON: {e}", file=sys.stderr)
 
+    custom_spots = None
+    if args.spots_json:
+        try:
+            custom_spots = json.loads(args.spots_json)
+        except Exception as e:
+            print(f"Warning: Failed to parse spots JSON: {e}", file=sys.stderr)
+
     if os.path.isdir(args.input):
         os.makedirs(args.output, exist_ok=True)
         valid_exts = {".jpg", ".jpeg", ".png", ".webp", ".mp4", ".mov", ".webm", ".avi", ".m4v"}
@@ -732,7 +804,9 @@ def main():
                     inpaint_radius=args.inpaint_radius,
                     inpaint_method=args.method,
                     custom_boxes=custom_boxes,
+                    custom_spots=custom_spots,
                     mask_path=args.mask,
+                    auto_detect_sparkles=args.auto_detect_sparkles,
                     logo_path=args.logo,
                     logo_pos=args.logo_pos,
                     logo_scale=args.logo_scale,
@@ -758,7 +832,9 @@ def main():
                 inpaint_radius=args.inpaint_radius,
                 inpaint_method=args.method,
                 custom_boxes=custom_boxes,
+                custom_spots=custom_spots,
                 mask_path=args.mask,
+                auto_detect_sparkles=args.auto_detect_sparkles,
                 logo_path=args.logo,
                 logo_pos=args.logo_pos,
                 logo_scale=args.logo_scale,

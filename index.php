@@ -366,31 +366,74 @@
                     <div class="flex items-center justify-between pb-3 border-b border-slate-800">
                         <div class="flex items-center gap-2">
                             <div class="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center">
-                                <i data-lucide="eraser" class="w-4 h-4"></i>
+                                <i data-lucide="sparkles" class="w-4 h-4"></i>
                             </div>
-                            <h2 class="text-sm font-bold text-white">2. Gemini Sparkle Cleaner</h2>
+                            <h2 class="text-sm font-bold text-white">2. AI Sparkle & Watermark Cleaner</h2>
                         </div>
                         <label class="relative inline-flex items-center cursor-pointer">
-                            <input type="checkbox" id="chkRemoveGemini" class="sr-only peer" onchange="saveSettings()">
+                            <input type="checkbox" id="chkRemoveGemini" checked class="sr-only peer" onchange="saveSettings(); triggerBatchReprocess();">
                             <div class="w-9 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-amber-500"></div>
                         </label>
                     </div>
 
-                    <div class="text-xs text-slate-400 space-y-2.5">
-                        <p class="text-[11px] text-slate-300">
-                            Smooth feather inpaint blend removes AI watermark without dark boxes or distortion.
-                        </p>
+                    <div class="text-xs text-slate-400 space-y-3">
+                        <!-- Auto Detect Toggle -->
+                        <div class="flex items-center justify-between p-2.5 bg-slate-950/60 rounded-xl border border-slate-800">
+                            <label class="flex items-center gap-2 text-slate-200 cursor-pointer text-xs font-medium select-none">
+                                <input type="checkbox" id="chkAutoDetectSparkles" checked class="rounded bg-slate-800 border-slate-700 text-amber-500 focus:ring-0" onchange="saveSettings(); triggerBatchReprocess();">
+                                <span>✨ Smart Auto-Detect & Remove Sparkles (Full Image Scan)</span>
+                            </label>
+                        </div>
+
+                        <!-- Sparkle & Watermark Location -->
                         <div>
-                            <label class="text-slate-300 font-medium block mb-1">Corner Location</label>
-                            <div class="grid grid-cols-2 gap-2">
-                                <label class="flex items-center gap-2 p-2 bg-slate-800/80 hover:bg-slate-800 rounded-lg border border-slate-700/80 cursor-pointer">
-                                    <input type="radio" name="corner" value="bottom_right" checked class="text-amber-500 focus:ring-0" onchange="saveSettings()">
-                                    <span class="text-slate-200">Bottom-Right</span>
+                            <label class="text-slate-300 font-medium block mb-1.5">Watermark Location / Corner</label>
+                            <div class="grid grid-cols-3 gap-1.5">
+                                <label class="flex items-center justify-center p-2 bg-slate-800/80 hover:bg-slate-800 rounded-lg border border-slate-700/80 cursor-pointer text-center text-[11px]">
+                                    <input type="radio" name="corner" value="auto" checked class="sr-only" onchange="updateCornerUI(); saveSettings(); triggerBatchReprocess();">
+                                    <span class="corner-label font-bold text-amber-400">✨ Auto Scan</span>
                                 </label>
-                                <label class="flex items-center gap-2 p-2 bg-slate-800/80 hover:bg-slate-800 rounded-lg border border-slate-700/80 cursor-pointer">
-                                    <input type="radio" name="corner" value="bottom_left" class="text-amber-500 focus:ring-0" onchange="saveSettings()">
-                                    <span class="text-slate-200">Bottom-Left</span>
+                                <label class="flex items-center justify-center p-2 bg-slate-800/80 hover:bg-slate-800 rounded-lg border border-slate-700/80 cursor-pointer text-center text-[11px]">
+                                    <input type="radio" name="corner" value="bottom_right" class="sr-only" onchange="updateCornerUI(); saveSettings(); triggerBatchReprocess();">
+                                    <span class="corner-label text-slate-300">Bottom-Right</span>
                                 </label>
+                                <label class="flex items-center justify-center p-2 bg-slate-800/80 hover:bg-slate-800 rounded-lg border border-slate-700/80 cursor-pointer text-center text-[11px]">
+                                    <input type="radio" name="corner" value="bottom_left" class="sr-only" onchange="updateCornerUI(); saveSettings(); triggerBatchReprocess();">
+                                    <span class="corner-label text-slate-300">Bottom-Left</span>
+                                </label>
+                                <label class="flex items-center justify-center p-2 bg-slate-800/80 hover:bg-slate-800 rounded-lg border border-slate-700/80 cursor-pointer text-center text-[11px]">
+                                    <input type="radio" name="corner" value="top_right" class="sr-only" onchange="updateCornerUI(); saveSettings(); triggerBatchReprocess();">
+                                    <span class="corner-label text-slate-300">Top-Right</span>
+                                </label>
+                                <label class="flex items-center justify-center p-2 bg-slate-800/80 hover:bg-slate-800 rounded-lg border border-slate-700/80 cursor-pointer text-center text-[11px]">
+                                    <input type="radio" name="corner" value="top_left" class="sr-only" onchange="updateCornerUI(); saveSettings(); triggerBatchReprocess();">
+                                    <span class="corner-label text-slate-300">Top-Left</span>
+                                </label>
+                                <label class="flex items-center justify-center p-2 bg-slate-800/80 hover:bg-slate-800 rounded-lg border border-slate-700/80 cursor-pointer text-center text-[11px]">
+                                    <input type="radio" name="corner" value="all_corners" class="sr-only" onchange="updateCornerUI(); saveSettings(); triggerBatchReprocess();">
+                                    <span class="corner-label text-slate-300">All Corners</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Spot Eraser Tool Info -->
+                        <div class="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl space-y-1.5">
+                            <div class="flex items-center justify-between">
+                                <span class="text-amber-400 font-semibold text-xs flex items-center gap-1.5">
+                                    <i data-lucide="crosshair" class="w-3.5 h-3.5"></i> Click-To-Erase Upper Sparkles
+                                </span>
+                                <span id="spotCountBadge" class="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-mono">
+                                    0 spots active
+                                </span>
+                            </div>
+                            <p class="text-[11px] text-slate-300">
+                                Click anywhere on a photo in the preview to instantly remove upper diamond sparkles, prong watermarks, or unwanted reflections.
+                            </p>
+                            <div id="spotActionsBar" class="hidden pt-1 flex items-center justify-between">
+                                <button type="button" onclick="clearCustomSpots()" class="text-[11px] text-rose-400 hover:text-rose-300 flex items-center gap-1">
+                                    <i data-lucide="trash-2" class="w-3 h-3"></i> Clear All Spots
+                                </button>
+                                <span class="text-[10px] text-slate-400">Click preview again to add more</span>
                             </div>
                         </div>
                     </div>
@@ -416,8 +459,11 @@
                     </button>
                 </div>
             </div>
-            <div class="flex-1 overflow-auto flex items-center justify-center max-h-[75vh]">
-                <img id="previewModalImg" src="" class="max-h-[75vh] w-auto object-contain rounded-xl shadow-lg" alt="Full Preview">
+            <div class="flex-1 overflow-auto flex flex-col items-center justify-center max-h-[75vh] relative select-none">
+                <div class="absolute top-2 left-2 z-10 bg-slate-900/90 border border-slate-700/80 rounded-lg px-2.5 py-1 text-[11px] text-amber-300 font-medium flex items-center gap-1.5 shadow-lg pointer-events-none backdrop-blur-sm">
+                    <i data-lucide="crosshair" class="w-3.5 h-3.5"></i> Click anywhere to erase sparkles / watermarks
+                </div>
+                <img id="previewModalImg" src="" onclick="handlePreviewImageClick(event)" class="max-h-[75vh] w-auto object-contain rounded-xl shadow-lg cursor-crosshair border border-slate-800" alt="Full Preview" title="Click anywhere to remove an upper sparkle or watermark">
                 <video id="previewModalVid" src="" class="hidden max-h-[75vh] w-auto object-contain rounded-xl shadow-lg" controls autoplay loop></video>
             </div>
         </div>
@@ -665,25 +711,120 @@
             });
         }
 
-        // Safe inpaint: samples adjacent natural texture with feathered circular mask (NO dark/black box!)
-        function removeGeminiWatermarkCanvas(ctx, width, height, corner) {
-            const boxSize = Math.max(24, Math.round(Math.min(width, height) * 0.08));
-            const margin = Math.max(6, Math.round(Math.min(width, height) * 0.025));
+        // Global Spot Eraser State
+        let customEraseSpots = [];
+        let reprocessDebounceTimer = null;
 
-            let targetX = 0, targetY = 0;
-            let srcX = 0, srcY = 0;
+        function triggerBatchReprocess() {
+            clearTimeout(reprocessDebounceTimer);
+            reprocessDebounceTimer = setTimeout(() => {
+                if (currentBatchFiles.length > 0) {
+                    processBatch(currentBatchFiles);
+                }
+            }, 300);
+        }
 
-            if (corner === 'bottom_right') {
-                targetX = width - boxSize - margin;
-                targetY = height - boxSize - margin;
-                srcX = Math.max(0, targetX - Math.round(boxSize * 0.4));
-                srcY = Math.max(0, targetY - Math.round(boxSize * 1.1));
-            } else if (corner === 'bottom_left') {
-                targetX = margin;
-                targetY = height - boxSize - margin;
-                srcX = Math.min(width - boxSize, targetX + Math.round(boxSize * 0.4));
-                srcY = Math.max(0, targetY - Math.round(boxSize * 1.1));
+        function updateCornerUI() {
+            const checkedCorner = document.querySelector('input[name="corner"]:checked');
+            const val = checkedCorner ? checkedCorner.value : 'auto';
+            document.querySelectorAll('input[name="corner"]').forEach(inp => {
+                const label = inp.closest('label');
+                const span = label.querySelector('.corner-label');
+                if (inp.checked) {
+                    label.className = 'flex items-center justify-center p-2 bg-amber-500 text-slate-950 font-bold rounded-lg shadow cursor-pointer text-center text-[11px]';
+                    if (span) span.className = 'corner-label text-slate-950 font-bold';
+                } else {
+                    label.className = 'flex items-center justify-center p-2 bg-slate-800/80 hover:bg-slate-800 rounded-lg border border-slate-700/80 cursor-pointer text-center text-[11px]';
+                    if (span) span.className = 'corner-label text-slate-300';
+                }
+            });
+        }
+
+        function addCustomSpot(xPct, yPct, radius = 20) {
+            customEraseSpots.push({ x: Math.max(0, Math.min(1.0, xPct)), y: Math.max(0, Math.min(1.0, yPct)), r: radius });
+            updateSpotBadge();
+            saveSettings();
+            triggerBatchReprocess();
+        }
+
+        function clearCustomSpots() {
+            customEraseSpots = [];
+            updateSpotBadge();
+            saveSettings();
+            showToast('All erase spots cleared');
+            triggerBatchReprocess();
+        }
+
+        function updateSpotBadge() {
+            const badge = document.getElementById('spotCountBadge');
+            const actions = document.getElementById('spotActionsBar');
+            if (badge) {
+                badge.textContent = `${customEraseSpots.length} spot(s) active`;
+                if (customEraseSpots.length > 0) {
+                    badge.className = 'text-[10px] px-2 py-0.5 rounded-full bg-amber-500 text-slate-950 font-bold font-mono';
+                } else {
+                    badge.className = 'text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-mono';
+                }
             }
+            if (actions) {
+                if (customEraseSpots.length > 0) {
+                    actions.classList.remove('hidden');
+                } else {
+                    actions.classList.add('hidden');
+                }
+            }
+        }
+
+        function handlePreviewImageClick(event) {
+            const img = document.getElementById('previewModalImg');
+            if (!img || !img.naturalWidth) return;
+
+            const rect = img.getBoundingClientRect();
+            const clickX = event.clientX - rect.left;
+            const clickY = event.clientY - rect.top;
+
+            const xPct = clickX / rect.width;
+            const yPct = clickY / rect.height;
+
+            addCustomSpot(xPct, yPct, 22);
+            showToast(`Erase spot added at ${(xPct*100).toFixed(1)}%, ${(yPct*100).toFixed(1)}%! Inpainting...`);
+            
+            // Re-render preview modal after short delay
+            setTimeout(() => {
+                if (currentBatchResults.length > 0) {
+                    const activeIdx = 0;
+                    openPreviewModal(activeIdx);
+                }
+            }, 400);
+        }
+
+        // ==================== IN-BROWSER HTML5 CANVAS ENGINE ====================
+        function getPreloadedLogo(logoPath) {
+            return new Promise((resolve) => {
+                if (logoImgCache[logoPath]) {
+                    resolve(logoImgCache[logoPath]);
+                    return;
+                }
+                const img = new Image();
+                img.crossOrigin = "anonymous";
+                img.onload = () => {
+                    logoImgCache[logoPath] = img;
+                    resolve(img);
+                };
+                img.onerror = () => {
+                    resolve(null);
+                };
+                img.src = logoPath;
+            });
+        }
+
+        // Inpaints a rectangular patch with soft radial feathering
+        function removeSinglePatchCanvas(ctx, targetX, targetY, boxSize, width, height) {
+            let srcX = Math.max(0, targetX - Math.round(boxSize * 0.45));
+            let srcY = Math.max(0, targetY - Math.round(boxSize * 1.15));
+
+            if (srcY < 5) srcY = Math.min(height - boxSize, targetY + Math.round(boxSize * 1.15));
+            if (srcX < 5) srcX = Math.min(width - boxSize, targetX + Math.round(boxSize * 0.5));
 
             targetX = Math.max(0, Math.min(targetX, width - boxSize));
             targetY = Math.max(0, Math.min(targetY, height - boxSize));
@@ -694,10 +835,8 @@
                 offCanvas.height = boxSize;
                 const offCtx = offCanvas.getContext('2d');
 
-                // Draw source patch
                 offCtx.drawImage(ctx.canvas, srcX, srcY, boxSize, boxSize, 0, 0, boxSize, boxSize);
 
-                // Create soft radial alpha gradient
                 offCtx.globalCompositeOperation = 'destination-in';
                 const maskGrad = offCtx.createRadialGradient(
                     boxSize / 2, boxSize / 2, boxSize * 0.1,
@@ -710,13 +849,84 @@
                 offCtx.fillStyle = maskGrad;
                 offCtx.fillRect(0, 0, boxSize, boxSize);
 
-                // Blend softly over watermark location
                 ctx.save();
-                ctx.globalAlpha = 0.95;
+                ctx.globalAlpha = 0.96;
                 ctx.drawImage(offCanvas, targetX, targetY);
                 ctx.restore();
-            } catch (e) {
-                // If anything is unsupported, bypass cleanly without drawing any black box!
+            } catch (e) {}
+        }
+
+        // Inpaints a circular spot (e.g. upper sparkles or diamond highlights) with micro-context feathering
+        function removeSpotCanvas(ctx, spotX, spotY, radius, width, height) {
+            const diameter = radius * 2;
+            let srcX = spotX + radius * 1.3;
+            let srcY = spotY;
+
+            if (srcX + diameter > width) srcX = spotX - radius * 2.3;
+            if (srcY + diameter > height) srcY = spotY - radius * 2.3;
+
+            srcX = Math.max(0, Math.min(width - diameter, srcX));
+            srcY = Math.max(0, Math.min(height - diameter, srcY));
+
+            const targetX = Math.max(0, Math.min(width - diameter, spotX - radius));
+            const targetY = Math.max(0, Math.min(height - diameter, spotY - radius));
+
+            try {
+                const offCanvas = document.createElement('canvas');
+                offCanvas.width = diameter;
+                offCanvas.height = diameter;
+                const offCtx = offCanvas.getContext('2d');
+
+                offCtx.drawImage(ctx.canvas, srcX, srcY, diameter, diameter, 0, 0, diameter, diameter);
+
+                offCtx.globalCompositeOperation = 'destination-in';
+                const maskGrad = offCtx.createRadialGradient(
+                    radius, radius, radius * 0.15,
+                    radius, radius, radius * 0.95
+                );
+                maskGrad.addColorStop(0, 'rgba(0, 0, 0, 1.0)');
+                maskGrad.addColorStop(0.65, 'rgba(0, 0, 0, 0.85)');
+                maskGrad.addColorStop(1, 'rgba(0, 0, 0, 0.0)');
+
+                offCtx.fillStyle = maskGrad;
+                offCtx.fillRect(0, 0, diameter, diameter);
+
+                ctx.save();
+                ctx.globalAlpha = 0.96;
+                ctx.drawImage(offCanvas, targetX, targetY);
+                ctx.restore();
+            } catch (e) {}
+        }
+
+        // Safe inpaint: clean Gemini corner watermarks + upper sparkles + custom erase spots
+        function removeGeminiWatermarkCanvas(ctx, width, height, corner = 'auto', customSpots = [], autoDetect = true) {
+            const boxSize = Math.max(24, Math.round(Math.min(width, height) * 0.08));
+            const margin = Math.max(6, Math.round(Math.min(width, height) * 0.025));
+
+            const cornerNorm = (corner || '').toLowerCase().replace('-', '_');
+
+            // 1. Inpaint Corner watermarks
+            if (cornerNorm === 'bottom_right' || cornerNorm === 'br' || cornerNorm === 'all_corners' || cornerNorm === 'auto') {
+                removeSinglePatchCanvas(ctx, width - boxSize - margin, height - boxSize - margin, boxSize, width, height);
+            }
+            if (cornerNorm === 'bottom_left' || cornerNorm === 'bl' || cornerNorm === 'all_corners') {
+                removeSinglePatchCanvas(ctx, margin, height - boxSize - margin, boxSize, width, height);
+            }
+            if (cornerNorm === 'top_right' || cornerNorm === 'tr' || cornerNorm === 'all_corners') {
+                removeSinglePatchCanvas(ctx, width - boxSize - margin, margin, boxSize, width, height);
+            }
+            if (cornerNorm === 'top_left' || cornerNorm === 'tl' || cornerNorm === 'all_corners') {
+                removeSinglePatchCanvas(ctx, margin, margin, boxSize, width, height);
+            }
+
+            // 2. Inpaint all user clicked/custom spots (e.g. Upper Sparkles)
+            if (customSpots && customSpots.length > 0) {
+                customSpots.forEach(spot => {
+                    const sx = spot.x <= 1.0 ? Math.round(spot.x * width) : Math.round(spot.x);
+                    const sy = spot.y <= 1.0 ? Math.round(spot.y * height) : Math.round(spot.y);
+                    const sr = Math.max(12, spot.r || Math.round(Math.min(width, height) * 0.022));
+                    removeSpotCanvas(ctx, sx, sy, sr, width, height);
+                });
             }
         }
 
@@ -782,7 +992,7 @@
                     const meanG = samples > 0 ? sumG / samples : 128;
                     const meanB = samples > 0 ? sumB / samples : 128;
                     const avgLum = 0.2126 * meanR + 0.7152 * meanG + 0.0722 * meanB;
-                    const isSkinTone = (meanR > 115 && meanG > 75 && meanR > meanB + 10 && avgLum < 195);
+                    const isSkinTone = (meanR > 115 and meanG > 75 and meanR > meanB + 10 and avgLum < 195);
 
                     // On dark backgrounds OR human skin tones -> Crisp White logo provides 100% crystal clear legibility
                     // On pure white/light studio lightbox -> Brand Gold/Color logo provides maximum luxury contrast
@@ -883,10 +1093,11 @@
 
                             // Optional Gemini clean (Safe soft feather inpaint)
                             const removeGemini = document.getElementById('chkRemoveGemini').checked;
-                            const corner = document.querySelector('input[name="corner"]:checked') ? document.querySelector('input[name="corner"]:checked').value : 'bottom_right';
+                            const autoDetect = document.getElementById('chkAutoDetectSparkles') ? document.getElementById('chkAutoDetectSparkles').checked : true;
+                            const corner = document.querySelector('input[name="corner"]:checked') ? document.querySelector('input[name="corner"]:checked').value : 'auto';
 
                             if (removeGemini) {
-                                removeGeminiWatermarkCanvas(ctx, canvas.width, canvas.height, corner);
+                                removeGeminiWatermarkCanvas(ctx, canvas.width, canvas.height, corner, customEraseSpots, autoDetect);
                             }
 
                             // Brand logo overlay
@@ -942,11 +1153,12 @@
                     canvas.height = height;
                     const ctx = canvas.getContext('2d', { willReadFrequently: true });
 
-                    const scalePct = parseFloat(document.getElementById('rngScale').value) || 0.32;
+                    const scalePct = parseFloat(document.getElementById('rngScale').value) || 0.15;
                     const opacityPct = parseFloat(document.getElementById('rngOpacity').value) || 0.90;
                     const shadow = document.getElementById('chkShadow').checked;
                     const removeGemini = document.getElementById('chkRemoveGemini').checked;
-                    const corner = document.querySelector('input[name="corner"]:checked') ? document.querySelector('input[name="corner"]:checked').value : 'bottom_right';
+                    const autoDetect = document.getElementById('chkAutoDetectSparkles') ? document.getElementById('chkAutoDetectSparkles').checked : true;
+                    const corner = document.querySelector('input[name="corner"]:checked') ? document.querySelector('input[name="corner"]:checked').value : 'auto';
 
                     let stream;
                     try {
@@ -1009,7 +1221,7 @@
                         ctx.drawImage(video, 0, 0, width, height);
 
                         if (removeGemini) {
-                            removeGeminiWatermarkCanvas(ctx, width, height, corner);
+                            removeGeminiWatermarkCanvas(ctx, width, height, corner, customEraseSpots, autoDetect);
                         }
 
                         await drawBrandLogoCanvas(ctx, width, height, currentBrand, currentColorMode, selectedLogoPos, scalePct, opacityPct, shadow);
@@ -1065,6 +1277,9 @@
 
             let handledByServer = false;
             const logoName = currentBrand === 'shreeja' ? 'shreeja_gems.png' : 'velmora_gems.png';
+            const removeGemini = document.getElementById('chkRemoveGemini').checked;
+            const autoDetect = document.getElementById('chkAutoDetectSparkles') ? document.getElementById('chkAutoDetectSparkles').checked : true;
+            const corner = document.querySelector('input[name="corner"]:checked') ? document.querySelector('input[name="corner"]:checked').value : 'auto';
 
             // Try server backend if available (local XAMPP with FFmpeg/Python)
             try {
@@ -1073,12 +1288,15 @@
                 for (let i = 0; i < files.length; i++) {
                     formData.append('images[]', files[i]);
                 }
-                formData.append('remove_gemini', document.getElementById('chkRemoveGemini').checked);
-                const corner = document.querySelector('input[name="corner"]:checked') ? document.querySelector('input[name="corner"]:checked').value : 'bottom_right';
+                formData.append('remove_gemini', removeGemini);
+                formData.append('auto_detect_sparkles', autoDetect);
                 formData.append('corner', corner);
                 formData.append('box_size', '0.08');
                 formData.append('margin', '0.025');
                 formData.append('method', 'telea');
+                if (customEraseSpots.length > 0) {
+                    formData.append('custom_spots', JSON.stringify(customEraseSpots));
+                }
                 formData.append('logo_name', logoName);
                 formData.append('logo_pos', selectedLogoPos);
                 formData.append('logo_scale', document.getElementById('rngScale').value);
@@ -1317,6 +1535,7 @@
 
         // ==================== SETTINGS STORAGE ====================
         function saveSettings() {
+            const checkedCorner = document.querySelector('input[name="corner"]:checked');
             const settings = {
                 brand: currentBrand,
                 colorMode: currentColorMode,
@@ -1324,7 +1543,10 @@
                 opacity: document.getElementById('rngOpacity').value,
                 scale: document.getElementById('rngScale').value,
                 shadow: document.getElementById('chkShadow').checked,
-                removeGemini: document.getElementById('chkRemoveGemini').checked
+                removeGemini: document.getElementById('chkRemoveGemini').checked,
+                autoDetectSparkles: document.getElementById('chkAutoDetectSparkles') ? document.getElementById('chkAutoDetectSparkles').checked : true,
+                corner: checkedCorner ? checkedCorner.value : 'auto',
+                customSpots: customEraseSpots
             };
             localStorage.setItem('velmora_wm_settings', JSON.stringify(settings));
         }
@@ -1350,6 +1572,20 @@
                     }
                     if (s.removeGemini !== undefined) {
                         document.getElementById('chkRemoveGemini').checked = s.removeGemini;
+                    }
+                    if (s.autoDetectSparkles !== undefined && document.getElementById('chkAutoDetectSparkles')) {
+                        document.getElementById('chkAutoDetectSparkles').checked = s.autoDetectSparkles;
+                    }
+                    if (s.corner) {
+                        const cornerRadio = document.querySelector(`input[name="corner"][value="${s.corner}"]`);
+                        if (cornerRadio) {
+                            cornerRadio.checked = true;
+                            updateCornerUI();
+                        }
+                    }
+                    if (Array.isArray(s.customSpots)) {
+                        customEraseSpots = s.customSpots;
+                        updateSpotBadge();
                     }
                 }
             } catch (e) {}

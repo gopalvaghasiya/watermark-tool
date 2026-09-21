@@ -202,12 +202,14 @@ function process_single_image($upload_dir, $output_dir, $logos_dir, $engine_py) 
     }
 
     $remove_gemini = isset($_POST['remove_gemini']) ? filter_var($_POST['remove_gemini'], FILTER_VALIDATE_BOOLEAN) : true;
+    $auto_detect   = isset($_POST['auto_detect_sparkles']) ? filter_var($_POST['auto_detect_sparkles'], FILTER_VALIDATE_BOOLEAN) : true;
     $corner        = isset($_POST['corner']) ? trim($_POST['corner']) : 'bottom_right';
     $box_size      = isset($_POST['box_size']) ? floatval($_POST['box_size']) : 0.09;
     $margin        = isset($_POST['margin']) ? floatval($_POST['margin']) : 0.035;
     $inpaint_method= isset($_POST['method']) && in_array(strtolower($_POST['method']), ['telea', 'ns']) ? strtolower($_POST['method']) : 'telea';
     $inpaint_radius= isset($_POST['inpaint_radius']) ? intval($_POST['inpaint_radius']) : 5;
     $custom_boxes  = isset($_POST['custom_boxes']) ? trim($_POST['custom_boxes']) : '';
+    $custom_spots  = isset($_POST['custom_spots']) ? trim($_POST['custom_spots']) : (isset($_POST['spots_json']) ? trim($_POST['spots_json']) : '');
 
     $logo_name     = isset($_POST['logo_name']) ? trim($_POST['logo_name']) : '';
     $logo_pos      = isset($_POST['logo_pos']) ? trim($_POST['logo_pos']) : 'center_left';
@@ -237,12 +239,19 @@ function process_single_image($upload_dir, $output_dir, $logos_dir, $engine_py) 
 
     if ($remove_gemini) {
         $cmd .= ' --remove-gemini --corner ' . escapeshellarg($corner) . ' --box-size ' . $box_size . ' --margin ' . $margin . ' --inpaint-radius ' . $inpaint_radius . ' --method ' . escapeshellarg($inpaint_method);
+        if ($auto_detect) {
+            $cmd .= ' --auto-detect-sparkles';
+        }
     } else {
         $cmd .= ' --no-remove-gemini';
     }
 
     if (!empty($custom_boxes)) {
         $cmd .= ' --boxes-json ' . escapeshellarg($custom_boxes);
+    }
+
+    if (!empty($custom_spots)) {
+        $cmd .= ' --spots-json ' . escapeshellarg($custom_spots);
     }
 
     if (!empty($temp_mask_path) && file_exists($temp_mask_path)) {
@@ -305,11 +314,13 @@ function process_batch_images($upload_dir, $output_dir, $logos_dir, $engine_py) 
     }
 
     $remove_gemini = isset($_POST['remove_gemini']) ? filter_var($_POST['remove_gemini'], FILTER_VALIDATE_BOOLEAN) : true;
+    $auto_detect   = isset($_POST['auto_detect_sparkles']) ? filter_var($_POST['auto_detect_sparkles'], FILTER_VALIDATE_BOOLEAN) : true;
     $corner        = isset($_POST['corner']) ? trim($_POST['corner']) : 'bottom_right';
     $box_size      = isset($_POST['box_size']) ? floatval($_POST['box_size']) : 0.09;
     $margin        = isset($_POST['margin']) ? floatval($_POST['margin']) : 0.035;
     $inpaint_method= isset($_POST['method']) ? trim($_POST['method']) : 'telea';
     $inpaint_radius= isset($_POST['inpaint_radius']) ? intval($_POST['inpaint_radius']) : 5;
+    $custom_spots  = isset($_POST['custom_spots']) ? trim($_POST['custom_spots']) : (isset($_POST['spots_json']) ? trim($_POST['spots_json']) : '');
 
     $logo_name     = isset($_POST['logo_name']) ? trim($_POST['logo_name']) : '';
     $logo_pos      = isset($_POST['logo_pos']) ? trim($_POST['logo_pos']) : 'center_left';
@@ -365,8 +376,15 @@ function process_batch_images($upload_dir, $output_dir, $logos_dir, $engine_py) 
 
     if ($remove_gemini) {
         $cmd .= ' --remove-gemini --corner ' . escapeshellarg($corner) . ' --box-size ' . $box_size . ' --margin ' . $margin . ' --inpaint-radius ' . $inpaint_radius . ' --method ' . escapeshellarg($inpaint_method);
+        if ($auto_detect) {
+            $cmd .= ' --auto-detect-sparkles';
+        }
     } else {
         $cmd .= ' --no-remove-gemini';
+    }
+
+    if (!empty($custom_spots)) {
+        $cmd .= ' --spots-json ' . escapeshellarg($custom_spots);
     }
 
     if (!empty($logo_path) && $logo_opacity > 0) {
