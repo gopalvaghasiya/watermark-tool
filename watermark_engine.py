@@ -192,17 +192,17 @@ def remove_gemini_watermark_cv2(
             kernel_th = cv2.getStructuringElement(cv2.MORPH_RECT, (15, 15))
             tophat = cv2.morphologyEx(gray, cv2.MORPH_TOPHAT, kernel_th)
 
-            # Search in the bottom-right and bottom-half region
-            y_start = int(h * 0.45)
-            x_start = int(w * 0.45)
-            roi_tophat = tophat[y_start:h, x_start:w]
+            # Search in the bottom-right corner region
+            y_start = int(h * 0.70)
+            x_start = int(w * 0.70)
+            roi_tophat = tophat[y_start:int(h * 0.98), x_start:int(w * 0.98)]
             rh, rw = roi_tophat.shape
 
             peaks = []
             for y in range(4, rh - 4, 2):
                 for x in range(4, rw - 4, 2):
                     val = int(roi_tophat[y, x])
-                    if val >= 13:
+                    if val >= 10:
                         patch = roi_tophat[max(0, y-2):min(rh, y+3), max(0, x-2):min(rw, x+3)]
                         if val == int(patch.max()):
                             peaks.append((val, x_start + x, y_start + y))
@@ -211,10 +211,10 @@ def remove_gemini_watermark_cv2(
             min_dist_sq = 14 * 14
             for val, px, py in peaks:
                 if not any((px - fx)**2 + (py - fy)**2 < min_dist_sq for _, fx, fy in stars_detected):
-                    star_r = max(14, int(min(w, h) * 0.035))
+                    star_r = max(14, int(min(w, h) * 0.038))
                     stars_detected.append((val, px, py))
                     cv2.circle(mask, (px, py), star_r, 255, -1)
-                    if len(stars_detected) >= 8:
+                    if len(stars_detected) >= 12:
                         break
         except Exception as e:
             print(f"Warning in sparkle auto-detection: {e}", file=sys.stderr)
@@ -492,7 +492,7 @@ def precompute_watermark_for_video(
     return None
 
 
-def detect_gemini_stars_cv2(img_bgr, rx1=0.45, ry1=0.45, rx2=0.98, ry2=0.98, min_contrast=13):
+def detect_gemini_stars_cv2(img_bgr, rx1=0.70, ry1=0.70, rx2=0.98, ry2=0.98, min_contrast=10):
     """
     Detects all 4-pointed Gemini watermark stars (both primary and satellite sparkles)
     using morphological top-hat filtering and non-maximum suppression.
