@@ -962,26 +962,26 @@
 
         // Clean Gemini corner watermarks + upper sparkles + custom erase spots without any dark artifacts
         function removeGeminiWatermarkCanvas(ctx, width, height, corner = 'auto', customSpots = [], autoDetect = true) {
-            const boxRadius = Math.max(16, Math.round(Math.min(width, height) * 0.042));
-            const margin = Math.max(8, Math.round(Math.min(width, height) * 0.030));
+            const boxRadius = Math.max(14, Math.round(Math.min(width, height) * 0.038));
+            const margin = Math.max(8, Math.round(Math.min(width, height) * 0.025));
             const cornerNorm = (corner || '').toLowerCase().replace('-', '_');
 
+            let starDetected = false;
             // 1. Auto-detect star sparkle in bottom-right area (and in video frames)
             if (autoDetect || cornerNorm === 'auto' || cornerNorm === 'bottom_right' || cornerNorm === 'br') {
-                const star = detectStarSparkleInCanvas(ctx, width, height, 0.65, 0.50, 0.97, 0.97);
+                const star = detectStarSparkleInCanvas(ctx, width, height, 0.60, 0.45, 0.98, 0.98);
                 if (star) {
-                    const starR = Math.max(16, Math.round(Math.min(width, height) * 0.040));
+                    starDetected = true;
+                    const starR = Math.max(14, Math.round(Math.min(width, height) * 0.038));
                     inpaintSpotCanvas(ctx, star.x, star.y, starR, width, height);
                 }
             }
 
-            // 2. Inpaint Corner watermarks using harmonic perimeter boundary fill
-            if (cornerNorm === 'bottom_right' || cornerNorm === 'br' || cornerNorm === 'all_corners' || cornerNorm === 'auto') {
-                inpaintSpotCanvas(ctx, width - margin - boxRadius, height - margin - boxRadius, boxRadius, width, height);
-                // Also cover slightly inset Gemini position
-                const insetX = width - Math.round(width * 0.12);
-                const insetY = height - Math.round(height * 0.12);
-                inpaintSpotCanvas(ctx, insetX, insetY, boxRadius, width, height);
+            // 2. Inpaint Corner watermarks only if star not detected or explicitly requested
+            if (!starDetected) {
+                if (cornerNorm === 'bottom_right' || cornerNorm === 'br' || cornerNorm === 'all_corners' || cornerNorm === 'auto') {
+                    inpaintSpotCanvas(ctx, width - margin - boxRadius, height - margin - boxRadius, boxRadius, width, height);
+                }
             }
             if (cornerNorm === 'bottom_left' || cornerNorm === 'bl' || cornerNorm === 'all_corners') {
                 inpaintSpotCanvas(ctx, margin + boxRadius, height - margin - boxRadius, boxRadius, width, height);
@@ -1149,65 +1149,56 @@
         // Process a single image file on client canvas (100% Lossless / Ultra-HD Clarity)
         function processImageOnClient(file) {
             return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const img = new Image();
-                    img.onload = async () => {
-                        try {
-                            const canvas = document.createElement('canvas');
-                            // Full 1:1 Pixel Native Resolution (Zero downscaling / degradation)
-                            canvas.width = img.naturalWidth || img.width;
-                            canvas.height = img.naturalHeight || img.height;
-                            const ctx = canvas.getContext('2d', { willReadFrequently: true });
-                            ctx.imageSmoothingEnabled = true;
-                            ctx.imageSmoothingQuality = 'high';
+                const img = new Image();
+                const url = URL.createObjectURL(file);
+                img.crossOrigin = "anonymous";
+                img.onload = async () => {
+                    const canvas = document.createElement('canvas');
+                    const width = img.naturalWidth || img.width;
+                    const height = img.naturalHeight || img.height;
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d', { willReadFrequently: true });
 
-                            // Draw original photo at full crispness
-                            ctx.drawImage(img, 0, 0);
+                    ctx.drawImage(img, 0, 0, width, height);
 
-                            // Optional Gemini clean (Safe soft feather inpaint)
-                            const removeGemini = document.getElementById('chkRemoveGemini').checked;
-                            const autoDetect = document.getElementById('chkAutoDetectSparkles') ? document.getElementById('chkAutoDetectSparkles').checked : true;
-                            const corner = document.querySelector('input[name="corner"]:checked') ? document.querySelector('input[name="corner"]:checked').value : 'auto';
+                    const removeGemini = document.getElementById('chkRemoveGemini').checked;
+                    const autoDetect = document.getElementById('chkAutoDetectSparkles') ? document.getElementById('chkAutoDetectSparkles').checked : true;
+                    const corner = document.querySelector('input[name="corner"]:checked') ? document.querySelector('input[name="corner"]:checked').value : 'auto';
 
-                            if (removeGemini) {
-                                removeGeminiWatermarkCanvas(ctx, canvas.width, canvas.height, corner, customEraseSpots, autoDetect);
-                            }
+                    if (removeGemini) {
+                        removeGeminiWatermarkCanvas(ctx, width, height, corner, customEraseSpots, autoDetect);
+                    }
 
-                            // Brand logo overlay
-                            const scalePct = parseFloat(document.getElementById('rngScale').value) || 0.15;
-                            const opacityPct = parseFloat(document.getElementById('rngOpacity').value) || 0.90;
-                            const shadow = document.getElementById('chkShadow').checked;
+                    const scalePct = parseFloat(document.getElementById('rngScale').value) || 0.15;
+                    const opacityPct = parseFloat(document.getElementById('rngOpacity').value) || 0.90;
+                    const shadow = document.getElementById('chkShadow').checked;
 
-                            await drawBrandLogoCanvas(ctx, canvas.width, canvas.height, currentBrand, currentColorMode, selectedLogoPos, scalePct, opacityPct, shadow);
+                    await drawBrandLogoCanvas(ctx, width, height, currentBrand, currentColorMode, selectedLogoPos, scalePct, opacityPct, shadow);
 
-                            // Preserve exact image format with 100% maximum studio quality
-                            const isPng = (file.type && file.type === 'image/png') || /\.png$/i.test(file.name || '');
-                            const isWebp = (file.type && file.type === 'image/webp') || /\.webp$/i.test(file.name || '');
-                            const exportMime = isPng ? 'image/png' : (isWebp ? 'image/webp' : 'image/jpeg');
-                            const exportQuality = 1.0; // 100% loss-free quality
-
-                            canvas.toBlob((blob) => {
-                                if (blob) {
-                                    const blobUrl = URL.createObjectURL(blob);
-                                    resolve({ blob, blobUrl, dataUrl: canvas.toDataURL(exportMime, exportQuality) });
-                                } else {
-                                    reject(new Error('Canvas export failed'));
-                                }
-                            }, exportMime, exportQuality);
-                        } catch (err) {
-                            reject(err);
+                    canvas.toBlob((blob) => {
+                        URL.revokeObjectURL(url);
+                        if (!blob) {
+                            reject(new Error('Canvas toBlob failed'));
+                            return;
                         }
-                    };
-                    img.onerror = reject;
-                    img.src = e.target.result;
+                        const blobUrl = URL.createObjectURL(blob);
+                        resolve({
+                            blob: blob,
+                            blobUrl: blobUrl,
+                            is_video: false
+                        });
+                    }, 'image/jpeg', 1.0);
                 };
-                reader.onerror = reject;
-                reader.readAsDataURL(file);
+                img.onerror = () => {
+                    URL.revokeObjectURL(url);
+                    reject(new Error('Failed to load image file.'));
+                };
+                img.src = url;
             });
         }
 
-        // Process a video file on client canvas using MediaRecorder (100% in-browser)
+        // Process a video file on client canvas using MediaRecorder (100% in-browser, high-performance)
         function processVideoOnClient(file, onProgress) {
             return new Promise((resolve, reject) => {
                 const video = document.createElement('video');
@@ -1233,6 +1224,171 @@
                     const removeGemini = document.getElementById('chkRemoveGemini').checked;
                     const autoDetect = document.getElementById('chkAutoDetectSparkles') ? document.getElementById('chkAutoDetectSparkles').checked : true;
                     const corner = document.querySelector('input[name="corner"]:checked') ? document.querySelector('input[name="corner"]:checked').value : 'auto';
+
+                    // 1. Pre-sample initial frame for watermark detection & logo layout
+                    ctx.drawImage(video, 0, 0, width, height);
+
+                    const inpaintSpots = [];
+                    if (removeGemini) {
+                        const boxRadius = Math.max(14, Math.round(Math.min(width, height) * 0.038));
+                        const margin = Math.max(8, Math.round(Math.min(width, height) * 0.025));
+                        const cornerNorm = (corner || '').toLowerCase().replace('-', '_');
+
+                        let starDetected = false;
+                        if (autoDetect || cornerNorm === 'auto' || cornerNorm === 'bottom_right' || cornerNorm === 'br') {
+                            const star = detectStarSparkleInCanvas(ctx, width, height, 0.60, 0.45, 0.98, 0.98);
+                            if (star) {
+                                starDetected = true;
+                                inpaintSpots.push({ x: star.x, y: star.y, r: boxRadius });
+                            }
+                        }
+
+                        if (!starDetected) {
+                            if (cornerNorm === 'bottom_right' || cornerNorm === 'br' || cornerNorm === 'all_corners' || cornerNorm === 'auto') {
+                                inpaintSpots.push({ x: width - margin - boxRadius, y: height - margin - boxRadius, r: boxRadius });
+                            }
+                        }
+                        if (cornerNorm === 'bottom_left' || cornerNorm === 'bl' || cornerNorm === 'all_corners') {
+                            inpaintSpots.push({ x: margin + boxRadius, y: height - margin - boxRadius, r: boxRadius });
+                        }
+                        if (cornerNorm === 'top_right' || cornerNorm === 'tr' || cornerNorm === 'all_corners') {
+                            inpaintSpots.push({ x: width - margin - boxRadius, y: margin + boxRadius, r: boxRadius });
+                        }
+                        if (cornerNorm === 'top_left' || cornerNorm === 'tl' || cornerNorm === 'all_corners') {
+                            inpaintSpots.push({ x: margin + boxRadius, y: margin + boxRadius, r: boxRadius });
+                        }
+                    }
+
+                    if (customEraseSpots && customEraseSpots.length > 0) {
+                        customEraseSpots.forEach(spot => {
+                            const sx = spot.x <= 1.0 ? Math.round(spot.x * width) : Math.round(spot.x);
+                            const sy = spot.y <= 1.0 ? Math.round(spot.y * height) : Math.round(spot.y);
+                            const sr = Math.max(10, spot.r || Math.round(Math.min(width, height) * 0.025));
+                            inpaintSpots.push({ x: sx, y: sy, r: sr });
+                        });
+                    }
+
+                    // 2. Precompute brand logo dimensions & pre-fetch image
+                    const minDim = Math.min(width, height);
+                    const targetW = Math.max(60, minDim * scalePct);
+                    const margin = Math.max(12, minDim * 0.04);
+
+                    let sampleX = margin;
+                    let sampleY = (height - (targetW * 0.35)) / 2;
+                    let sampleW = targetW;
+                    let sampleH = targetW * 0.35;
+
+                    if (selectedLogoPos === 'center') {
+                        sampleX = (width - targetW) / 2;
+                        sampleY = (height - sampleH) / 2;
+                    } else if (selectedLogoPos === 'center_left') {
+                        sampleX = margin;
+                        sampleY = (height - sampleH) / 2;
+                    } else if (selectedLogoPos === 'center_right') {
+                        sampleX = width - targetW - margin;
+                        sampleY = (height - sampleH) / 2;
+                    } else if (selectedLogoPos === 'bottom_center') {
+                        sampleX = (width - targetW) / 2;
+                        sampleY = height - sampleH - margin;
+                    } else if (selectedLogoPos === 'bottom_left') {
+                        sampleX = margin;
+                        sampleY = height - sampleH - margin;
+                    } else if (selectedLogoPos === 'bottom_right') {
+                        sampleX = width - targetW - margin;
+                        sampleY = height - sampleH - margin;
+                    } else if (selectedLogoPos === 'top_left') {
+                        sampleX = margin;
+                        sampleY = margin;
+                    } else if (selectedLogoPos === 'top_right') {
+                        sampleX = width - targetW - margin;
+                        sampleY = margin;
+                    } else if (selectedLogoPos === 'top_center') {
+                        sampleX = (width - targetW) / 2;
+                        sampleY = margin;
+                    }
+
+                    let isDarkOrSkin = false;
+                    try {
+                        const safeSx = Math.max(0, Math.min(Math.round(sampleX), width - 1));
+                        const safeSy = Math.max(0, Math.min(Math.round(sampleY), height - 1));
+                        const safeSw = Math.min(Math.round(sampleW), width - safeSx);
+                        const safeSh = Math.min(Math.round(sampleH), height - safeSy);
+
+                        if (safeSw > 0 && safeSh > 0) {
+                            const imgData = ctx.getImageData(safeSx, safeSy, safeSw, safeSh);
+                            const data = imgData.data;
+                            let sumR = 0, sumG = 0, sumB = 0, samples = 0;
+                            for (let i = 0; i < data.length; i += 16) {
+                                sumR += data[i];
+                                sumG += data[i+1];
+                                sumB += data[i+2];
+                                samples++;
+                            }
+                            const meanR = samples > 0 ? sumR / samples : 128;
+                            const meanG = samples > 0 ? sumG / samples : 128;
+                            const meanB = samples > 0 ? sumB / samples : 128;
+                            const avgLum = 0.2126 * meanR + 0.7152 * meanG + 0.0722 * meanB;
+                            const isSkinTone = (meanR > 115 && meanG > 75 && meanR > meanB + 10 && avgLum < 195);
+                            isDarkOrSkin = (avgLum < 170 || isSkinTone);
+                        } else {
+                            isDarkOrSkin = true;
+                        }
+                    } catch(e) {
+                        isDarkOrSkin = true;
+                    }
+
+                    let logoPath = '';
+                    if (currentBrand === 'shreeja') {
+                        if (currentColorMode === 'white' || (currentColorMode === 'auto' && isDarkOrSkin)) {
+                            logoPath = 'assets/logos/shreeja_gems_white.png';
+                        } else {
+                            logoPath = 'assets/logos/shreeja_gems.png';
+                        }
+                    } else {
+                        if (currentColorMode === 'white' || (currentColorMode === 'auto' && isDarkOrSkin)) {
+                            logoPath = 'assets/logos/velmora_gems_white.png';
+                        } else {
+                            logoPath = 'assets/logos/velmora_gems.png';
+                        }
+                    }
+
+                    const logoImg = await getPreloadedLogo(logoPath);
+                    let posX = 0, posY = 0, targetH = targetW;
+                    if (logoImg && logoImg.width) {
+                        const aspect = logoImg.height / logoImg.width;
+                        targetH = Math.round(targetW * aspect);
+
+                        if (selectedLogoPos === 'center') {
+                            posX = (width - targetW) / 2;
+                            posY = (height - targetH) / 2;
+                        } else if (selectedLogoPos === 'center_left') {
+                            posX = margin;
+                            posY = (height - targetH) / 2;
+                        } else if (selectedLogoPos === 'center_right') {
+                            posX = width - targetW - margin;
+                            posY = (height - targetH) / 2;
+                        } else if (selectedLogoPos === 'bottom_center') {
+                            posX = (width - targetW) / 2;
+                            posY = height - targetH - margin;
+                        } else if (selectedLogoPos === 'bottom_left') {
+                            posX = margin;
+                            posY = height - targetH - margin;
+                        } else if (selectedLogoPos === 'bottom_right') {
+                            posX = width - targetW - margin;
+                            posY = height - targetH - margin;
+                        } else if (selectedLogoPos === 'top_left') {
+                            posX = margin;
+                            posY = margin;
+                        } else if (selectedLogoPos === 'top_right') {
+                            posX = width - targetW - margin;
+                            posY = margin;
+                        } else if (selectedLogoPos === 'top_center') {
+                            posX = (width - targetW) / 2;
+                            posY = margin;
+                        }
+                        posX = Math.round(posX);
+                        posY = Math.round(posY);
+                    }
 
                     let stream;
                     try {
@@ -1292,13 +1448,28 @@
                             }
                         }
 
+                        // Draw video frame to canvas
                         ctx.drawImage(video, 0, 0, width, height);
 
-                        if (removeGemini) {
-                            removeGeminiWatermarkCanvas(ctx, width, height, corner, customEraseSpots, autoDetect);
+                        // Inpaint Gemini star & custom spots with ultra-fast harmonic boundary fill
+                        for (let i = 0; i < inpaintSpots.length; i++) {
+                            const s = inpaintSpots[i];
+                            inpaintSpotCanvas(ctx, s.x, s.y, s.r, width, height);
                         }
 
-                        await drawBrandLogoCanvas(ctx, width, height, currentBrand, currentColorMode, selectedLogoPos, scalePct, opacityPct, shadow);
+                        // Draw crisp brand logo on top with crystal clear shadow
+                        if (logoImg && logoImg.width) {
+                            ctx.save();
+                            ctx.globalAlpha = opacityPct;
+                            if (shadow) {
+                                ctx.shadowColor = 'rgba(0, 0, 0, 0.85)';
+                                ctx.shadowBlur = 10;
+                                ctx.shadowOffsetX = 1.5;
+                                ctx.shadowOffsetY = 1.5;
+                            }
+                            ctx.drawImage(logoImg, posX, posY, targetW, targetH);
+                            ctx.restore();
+                        }
 
                         if (onProgress && duration > 0) {
                             const prog = Math.min(0.99, video.currentTime / duration);

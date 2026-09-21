@@ -568,30 +568,29 @@ def process_video(
         corner_norm = (corner or "").lower().replace("-", "_")
 
         # 1. Detect exact Gemini star location on video frame
+        star_loc = None
         if auto_detect_sparkles or corner_norm == "auto":
-            star_loc = detect_star_peak_cv2(first_frame, 0.65, 0.55, 0.97, 0.97)
+            star_loc = detect_star_peak_cv2(first_frame, 0.60, 0.45, 0.98, 0.98)
             if star_loc:
-                star_r = max(16, int(min(width, height) * 0.045))
+                star_r = max(14, int(min(width, height) * 0.038))
                 cv2.circle(mask, star_loc, star_r, 255, -1)
 
-        # 2. Add corner zones
-        box_w = max(15, int(width * box_size_pct))
-        box_h = max(15, int(height * box_size_pct))
-        margin_x = int(width * margin_pct)
-        margin_y = int(height * margin_pct)
+        # 2. Add corner zone only if star wasn't detected or corner explicitly chosen
+        if not star_loc:
+            box_w = max(14, int(width * box_size_pct))
+            box_h = max(14, int(height * box_size_pct))
+            margin_x = int(width * margin_pct)
+            margin_y = int(height * margin_pct)
+            r_corner = max(box_w, box_h) // 2
 
-        if corner_norm in ["bottom_right", "br", "all_corners", "all", "auto"]:
-            mask[max(0, height - margin_y - box_h):min(height, height - margin_y), max(0, width - margin_x - box_w):min(width, width - margin_x)] = 255
-            # Also cover broader Gemini video watermark zone (x: 80%..95%, y: 76%..92%)
-            wm_x1, wm_y1 = int(width * 0.78), int(height * 0.74)
-            wm_x2, wm_y2 = int(width * 0.95), int(height * 0.92)
-            cv2.rectangle(mask, (wm_x1, wm_y1), (wm_x2, wm_y2), 255, -1)
-        if corner_norm in ["bottom_left", "bl", "all_corners", "all"]:
-            mask[max(0, height - margin_y - box_h):min(height, height - margin_y), max(0, margin_x):min(width, margin_x + box_w)] = 255
-        if corner_norm in ["top_right", "tr", "all_corners", "all"]:
-            mask[max(0, margin_y):min(height, margin_y + box_h), max(0, width - margin_x - box_w):min(width, width - margin_x)] = 255
-        if corner_norm in ["top_left", "tl", "all_corners", "all"]:
-            mask[max(0, margin_y):min(height, margin_y + box_h), max(0, margin_x):min(width, margin_x + box_w)] = 255
+            if corner_norm in ["bottom_right", "br", "all_corners", "all", "auto"]:
+                cv2.circle(mask, (width - margin_x - r_corner, height - margin_y - r_corner), r_corner, 255, -1)
+            if corner_norm in ["bottom_left", "bl", "all_corners", "all"]:
+                cv2.circle(mask, (margin_x + r_corner, height - margin_y - r_corner), r_corner, 255, -1)
+            if corner_norm in ["top_right", "tr", "all_corners", "all"]:
+                cv2.circle(mask, (width - margin_x - r_corner, margin_y + r_corner), r_corner, 255, -1)
+            if corner_norm in ["top_left", "tl", "all_corners", "all"]:
+                cv2.circle(mask, (margin_x + r_corner, margin_y + r_corner), r_corner, 255, -1)
 
         # 3. Add custom spots (e.g. upper sparkles or user clicked spots)
         if custom_spots:
