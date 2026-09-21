@@ -818,114 +818,110 @@
             });
         }
 
-        // Inpaints a rectangular patch with soft radial feathering
-        function removeSinglePatchCanvas(ctx, targetX, targetY, boxSize, width, height) {
-            let srcX = Math.max(0, targetX - Math.round(boxSize * 0.45));
-            let srcY = Math.max(0, targetY - Math.round(boxSize * 1.15));
+        // High-Precision Harmonic Boundary Inpainter (Eliminates all dark circles / color smudges!)
+        function inpaintSpotCanvas(ctx, cx, cy, radius, width, height) {
+            cx = Math.round(cx);
+            cy = Math.round(cy);
+            radius = Math.max(6, Math.round(radius));
 
-            if (srcY < 5) srcY = Math.min(height - boxSize, targetY + Math.round(boxSize * 1.15));
-            if (srcX < 5) srcX = Math.min(width - boxSize, targetX + Math.round(boxSize * 0.5));
+            const rOuter = radius + 4;
+            const x1 = Math.max(0, cx - rOuter);
+            const y1 = Math.max(0, cy - rOuter);
+            const x2 = Math.min(width, cx + rOuter + 1);
+            const y2 = Math.min(height, cy + rOuter + 1);
+            const pw = x2 - x1;
+            const ph = y2 - y1;
 
-            targetX = Math.max(0, Math.min(targetX, width - boxSize));
-            targetY = Math.max(0, Math.min(targetY, height - boxSize));
+            if (pw <= 4 || ph <= 4) return;
 
-            try {
-                const offCanvas = document.createElement('canvas');
-                offCanvas.width = boxSize;
-                offCanvas.height = boxSize;
-                const offCtx = offCanvas.getContext('2d');
+            const imgData = ctx.getImageData(x1, y1, pw, ph);
+            const d = imgData.data;
+            const localCx = cx - x1;
+            const localCy = cy - y1;
 
-                offCtx.drawImage(ctx.canvas, srcX, srcY, boxSize, boxSize, 0, 0, boxSize, boxSize);
+            // Sample 32 perimeter ring pixels immediately surrounding the spot
+            const numSamples = 32;
+            const ring = [];
+            for (let i = 0; i < numSamples; i++) {
+                const angle = (2.0 * Math.PI * i) / numSamples;
+                let rx = Math.round(localCx + (radius + 2) * Math.cos(angle));
+                let ry = Math.round(localCy + (radius + 2) * Math.sin(angle));
+                rx = Math.max(0, Math.min(pw - 1, rx));
+                ry = Math.max(0, Math.min(ph - 1, ry));
+                const idx = (ry * pw + rx) * 4;
+                ring.push({
+                    x: rx,
+                    y: ry,
+                    r: d[idx],
+                    g: d[idx + 1],
+                    b: d[idx + 2]
+                });
+            }
 
-                offCtx.globalCompositeOperation = 'destination-in';
-                const maskGrad = offCtx.createRadialGradient(
-                    boxSize / 2, boxSize / 2, boxSize * 0.1,
-                    boxSize / 2, boxSize / 2, boxSize * 0.48
-                );
-                maskGrad.addColorStop(0, 'rgba(0, 0, 0, 1.0)');
-                maskGrad.addColorStop(0.65, 'rgba(0, 0, 0, 0.85)');
-                maskGrad.addColorStop(1, 'rgba(0, 0, 0, 0.0)');
+            const fadeLimit = radius + 1.5;
 
-                offCtx.fillStyle = maskGrad;
-                offCtx.fillRect(0, 0, boxSize, boxSize);
+            // Harmonically interpolate interior pixels from exact boundary colors
+            for (let y = 0; y < ph; y++) {
+                for (let x = 0; x < pw; x++) {
+                    const dist = Math.hypot(x - localCx, y - localCy);
+                    if (dist <= fadeLimit) {
+                        let totalW = 0.0;
+                        let sumR = 0.0, sumG = 0.0, sumB = 0.0;
 
-                ctx.save();
-                ctx.globalAlpha = 0.96;
-                ctx.drawImage(offCanvas, targetX, targetY);
-                ctx.restore();
-            } catch (e) {}
+                        for (let i = 0; i < numSamples; i++) {
+                            const p = ring[i];
+                            const pDist = Math.max(0.7, Math.hypot(x - p.x, y - p.y));
+                            const weight = 1.0 / (pDist * pDist);
+                            totalW += weight;
+                            sumR += p.r * weight;
+                            sumG += p.g * weight;
+                            sumB += p.b * weight;
+                        }
+
+                        const interpR = sumR / totalW;
+                        const interpG = sumG / totalW;
+                        const interpB = sumB / totalW;
+
+                        const fade = Math.min(1.0, Math.max(0.0, (fadeLimit - dist) / 2.0));
+                        const idx = (y * pw + x) * 4;
+
+                        d[idx] = Math.round(d[idx] * (1.0 - fade) + interpR * fade);
+                        d[idx + 1] = Math.round(d[idx + 1] * (1.0 - fade) + interpG * fade);
+                        d[idx + 2] = Math.round(d[idx + 2] * (1.0 - fade) + interpB * fade);
+                    }
+                }
+            }
+
+            ctx.putImageData(imgData, x1, y1);
         }
 
-        // Inpaints a circular spot (e.g. upper sparkles or diamond highlights) with micro-context feathering
-        function removeSpotCanvas(ctx, spotX, spotY, radius, width, height) {
-            const diameter = radius * 2;
-            let srcX = spotX + radius * 1.3;
-            let srcY = spotY;
-
-            if (srcX + diameter > width) srcX = spotX - radius * 2.3;
-            if (srcY + diameter > height) srcY = spotY - radius * 2.3;
-
-            srcX = Math.max(0, Math.min(width - diameter, srcX));
-            srcY = Math.max(0, Math.min(height - diameter, srcY));
-
-            const targetX = Math.max(0, Math.min(width - diameter, spotX - radius));
-            const targetY = Math.max(0, Math.min(height - diameter, spotY - radius));
-
-            try {
-                const offCanvas = document.createElement('canvas');
-                offCanvas.width = diameter;
-                offCanvas.height = diameter;
-                const offCtx = offCanvas.getContext('2d');
-
-                offCtx.drawImage(ctx.canvas, srcX, srcY, diameter, diameter, 0, 0, diameter, diameter);
-
-                offCtx.globalCompositeOperation = 'destination-in';
-                const maskGrad = offCtx.createRadialGradient(
-                    radius, radius, radius * 0.15,
-                    radius, radius, radius * 0.95
-                );
-                maskGrad.addColorStop(0, 'rgba(0, 0, 0, 1.0)');
-                maskGrad.addColorStop(0.65, 'rgba(0, 0, 0, 0.85)');
-                maskGrad.addColorStop(1, 'rgba(0, 0, 0, 0.0)');
-
-                offCtx.fillStyle = maskGrad;
-                offCtx.fillRect(0, 0, diameter, diameter);
-
-                ctx.save();
-                ctx.globalAlpha = 0.96;
-                ctx.drawImage(offCanvas, targetX, targetY);
-                ctx.restore();
-            } catch (e) {}
-        }
-
-        // Safe inpaint: clean Gemini corner watermarks + upper sparkles + custom erase spots
+        // Clean Gemini corner watermarks + upper sparkles + custom erase spots without any dark artifacts
         function removeGeminiWatermarkCanvas(ctx, width, height, corner = 'auto', customSpots = [], autoDetect = true) {
-            const boxSize = Math.max(24, Math.round(Math.min(width, height) * 0.08));
-            const margin = Math.max(6, Math.round(Math.min(width, height) * 0.025));
-
+            const boxRadius = Math.max(16, Math.round(Math.min(width, height) * 0.038));
+            const margin = Math.max(8, Math.round(Math.min(width, height) * 0.030));
             const cornerNorm = (corner || '').toLowerCase().replace('-', '_');
 
-            // 1. Inpaint Corner watermarks
+            // 1. Inpaint Corner watermarks using harmonic perimeter boundary fill
             if (cornerNorm === 'bottom_right' || cornerNorm === 'br' || cornerNorm === 'all_corners' || cornerNorm === 'auto') {
-                removeSinglePatchCanvas(ctx, width - boxSize - margin, height - boxSize - margin, boxSize, width, height);
+                inpaintSpotCanvas(ctx, width - margin - boxRadius, height - margin - boxRadius, boxRadius, width, height);
             }
             if (cornerNorm === 'bottom_left' || cornerNorm === 'bl' || cornerNorm === 'all_corners') {
-                removeSinglePatchCanvas(ctx, margin, height - boxSize - margin, boxSize, width, height);
+                inpaintSpotCanvas(ctx, margin + boxRadius, height - margin - boxRadius, boxRadius, width, height);
             }
             if (cornerNorm === 'top_right' || cornerNorm === 'tr' || cornerNorm === 'all_corners') {
-                removeSinglePatchCanvas(ctx, width - boxSize - margin, margin, boxSize, width, height);
+                inpaintSpotCanvas(ctx, width - margin - boxRadius, margin + boxRadius, boxRadius, width, height);
             }
             if (cornerNorm === 'top_left' || cornerNorm === 'tl' || cornerNorm === 'all_corners') {
-                removeSinglePatchCanvas(ctx, margin, margin, boxSize, width, height);
+                inpaintSpotCanvas(ctx, margin + boxRadius, margin + boxRadius, boxRadius, width, height);
             }
 
-            // 2. Inpaint all user clicked/custom spots (e.g. Upper Sparkles)
+            // 2. Inpaint all user clicked/custom spots (e.g. Upper Diamond Sparkle)
             if (customSpots && customSpots.length > 0) {
                 customSpots.forEach(spot => {
                     const sx = spot.x <= 1.0 ? Math.round(spot.x * width) : Math.round(spot.x);
                     const sy = spot.y <= 1.0 ? Math.round(spot.y * height) : Math.round(spot.y);
-                    const sr = Math.max(12, spot.r || Math.round(Math.min(width, height) * 0.022));
-                    removeSpotCanvas(ctx, sx, sy, sr, width, height);
+                    const sr = Math.max(10, spot.r || Math.round(Math.min(width, height) * 0.018));
+                    inpaintSpotCanvas(ctx, sx, sy, sr, width, height);
                 });
             }
         }
